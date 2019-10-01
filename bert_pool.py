@@ -16,7 +16,7 @@ class BertForIncongruity(torch.nn.Module):
         self.similarity_bias = torch.randn(1)
 
     def forward(self, headline_input_ids, bodytext_input_ids,
-                headline_token_type_ids=None, bodytext_token_type_ids=None, labels=None):
+                headline_token_type_ids, bodytext_token_type_ids):
         headline_outputs = self.bert(headline_input_ids, token_type_ids=headline_token_type_ids)
         bodytext_outputs = self.bert(bodytext_input_ids, token_type_ids=bodytext_token_type_ids)
 
@@ -24,21 +24,16 @@ class BertForIncongruity(torch.nn.Module):
         bodytext_mean_hidden = bodytext_outputs[0].mean(dim=1, keepdim=True)  # (batch, 1, hidden_dim)
         bodytext_mean_hidden = torch.transpose(bodytext_mean_hidden, 1, 2)    # (batch, hidden_dim, 1)
 
-        bodytext_mean_hidden
-        self.similarity()
-        logits = self.get_logits(pooled_output)
+        # (batch, 1)
+        logits = torch.sigmoid(torch.matmul(torch.matmul(headline_mean_hidden, self.similarity),
+                                            bodytext_mean_hidden) + self.similarity_bias)
 
-        if labels is not None:
-            loss_fct = torch.nn.BCEWithLogitsLoss()
-            loss = loss_fct(logits.view(-1, 1), labels.view(-1, 1))
-            return loss
-        else:
-            return logits
+        return logits
 
-    def freeze_bert_encoder(self):
-        for param in self.bert.parameters():
-            param.requires_grad = False
-
-    def unfreeze_bert_encoder(self):
-        for param in self.bert.parameters():
-            param.requires_grad = True
+    # def freeze_bert_encoder(self):
+    #     for param in self.bert.parameters():
+    #         param.requires_grad = False
+    #
+    # def unfreeze_bert_encoder(self):
+    #     for param in self.bert.parameters():
+    #         param.requires_grad = True
