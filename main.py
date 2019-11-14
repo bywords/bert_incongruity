@@ -5,7 +5,8 @@ import random
 import argparse
 import torch
 import logging
-from torch import nn, data
+from torch import nn
+from torch.utils import data
 from tqdm import trange
 from transformers import BertTokenizer, AdamW, WarmupLinearSchedule
 
