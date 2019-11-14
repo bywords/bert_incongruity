@@ -3,25 +3,25 @@ import torch
 from transformers import BertModel
 
 
-class BertForIncongruity(torch.nn.Module):
+class BertPoolForIncongruity(torch.nn.Module):
     """BERT model for classification.
     This module is composed of the BERT model with a linear layer on top of
     the pooled output.
     """
 
-    def __init__(self, config):
-        super(BertForIncongruity, self).__init__()
-        self.bert = BertModel.from_pretrained(config)
-        self.similarity = torch.randn(config.hidden_size, config.hidden_size)
+    def __init__(self, vocab_file, do_lower_case, hidden_size):
+        super(BertPoolForIncongruity, self).__init__()
+        self.bert = BertModel.from_pretrained(vocab_file, do_lower_case=do_lower_case)
+        self.similarity = torch.randn(hidden_size, hidden_size)
         self.similarity_bias = torch.randn(1)
 
     def forward(self, headline_input_ids, bodytext_input_ids,
                 headline_token_type_ids, bodytext_token_type_ids):
-        headline_outputs = self.bert(headline_input_ids, token_type_ids=headline_token_type_ids)
-        bodytext_outputs = self.bert(bodytext_input_ids, token_type_ids=bodytext_token_type_ids)
+        headline_outputs = self.bert(headline_input_ids, token_type_ids=headline_token_type_ids)[0]  # last hidden states
+        bodytext_outputs = self.bert(bodytext_input_ids, token_type_ids=bodytext_token_type_ids)[0]  # last hidden states
 
-        headline_mean_hidden = headline_outputs[0].mean(dim=1, keepdim=True)  # (batch, 1, hidden_dim)
-        bodytext_mean_hidden = bodytext_outputs[0].mean(dim=1, keepdim=True)  # (batch, 1, hidden_dim)
+        headline_mean_hidden = headline_outputs.mean(dim=1, keepdim=True)  # (batch, 1, hidden_dim)
+        bodytext_mean_hidden = bodytext_outputs.mean(dim=1, keepdim=True)  # (batch, 1, hidden_dim)
         bodytext_mean_hidden = torch.transpose(bodytext_mean_hidden, 1, 2)    # (batch, hidden_dim, 1)
 
         # (batch, 1)
