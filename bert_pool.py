@@ -1,9 +1,10 @@
 # -*- encoding: utf-8 -*-
 import torch
+from torch import nn
 from transformers import BertModel
 
 
-class BertPoolForIncongruity(torch.nn.Module):
+class BertPoolForIncongruity(nn.Module):
     """BERT model for classification.
     This module is composed of the BERT model with a linear layer on top of
     the pooled output.
@@ -12,8 +13,8 @@ class BertPoolForIncongruity(torch.nn.Module):
     def __init__(self, vocab_file, do_lower_case, hidden_size):
         super(BertPoolForIncongruity, self).__init__()
         self.bert = BertModel.from_pretrained(vocab_file, do_lower_case=do_lower_case)
-        self.similarity = torch.randn(hidden_size, hidden_size)
-        self.similarity_bias = torch.randn(1)
+        self.similarity = nn.Parameter(torch.randn(hidden_size, hidden_size))
+        self.similarity_bias = nn.Parameter(torch.randn(1))
 
     def forward(self, headline_input_ids, bodytext_input_ids,
                 headline_token_type_ids, bodytext_token_type_ids):
@@ -30,10 +31,10 @@ class BertPoolForIncongruity(torch.nn.Module):
 
         return logits
 
-    # def freeze_bert_encoder(self):
-    #     for param in self.bert.parameters():
-    #         param.requires_grad = False
-    #
-    # def unfreeze_bert_encoder(self):
-    #     for param in self.bert.parameters():
-    #         param.requires_grad = True
+    def freeze_bert_encoder(self):
+        for param in self.bert.parameters():
+            param.requires_grad = False
+
+    def unfreeze_bert_encoder(self):
+        for param in self.bert.parameters():
+            param.requires_grad = True

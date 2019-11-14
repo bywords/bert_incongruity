@@ -11,3 +11,10 @@ If the ``Library not loaded'' error occurs in Mac OS, run the command below:
 brew install libomp
 ```
 
+## Dataset download
+
+```bash
+scp -P 9922 kaist@kdialogue.snu.ac.kr:~/incon_dataset/NELA_2018_more_info/* data/
+```
+
+

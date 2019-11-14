@@ -1,17 +1,55 @@
 # -*- encoding: utf-8 -*-
+import numpy as np
+import random
+import argparse
 import torch
+import logging
+from torch import nn, data
 from tqdm import trange
 from transformers import BertTokenizer, AdamW, WarmupLinearSchedule
 
+from data_utils import IncongruityDataset, DataType, flat_accuracy
 from bert_pool import BertPoolForIncongruity
-from util import flat_accuracy
 
 
-def train_bert_pool():
-
+def set_seed(args):
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    if args.n_gpu > 0:
+        torch.cuda.manual_seed_all(args.seed)
 
 
 def main():
+    parser = argparse.ArgumentParser()
+
+    ## Required parameters
+    parser.add_argument("--train_data_file", default=None, type=str, required=True,
+                        help="The input training data file (a text file).")
+    parser.add_argument("--output_dir", default=None, type=str, required=True,
+                        help="The output directory where the model predictions and checkpoints will be written.")
+
+    ## Other parameters
+    parser.add_argument("--eval_data_file", default=None, type=str,
+                        help="An optional input evaluation data file to evaluate the perplexity on (a text file).")
+
+    parser.add_argument("--model_type", default="bert", type=str,
+                        help="The model architecture to be fine-tuned.")
+    parser.add_argument("--model_name_or_path", default="bert-base-cased", type=str,
+                        help="The model checkpoint for weights initialization.")
+    args = parser.parse_args()
+
+    # Setup logging
+    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
+                        datefmt='%m/%d/%Y %H:%M:%S',
+                        level=logging.INFO if args.local_rank in [-1, 0] else logging.WARN)
+    logger.warning("Process rank: %s, device: %s, n_gpu: %s, distributed training: %s, 16-bits training: %s",
+                   args.local_rank, device, args.n_gpu, bool(args.local_rank != -1), args.fp16)
+
+    # Set seed
+    set_seed(args)
+
+
     # Parameters:
     lr = 1e-3
     max_grad_norm = 1.0
@@ -21,31 +59,32 @@ def main():
 
     # Number of training epochs (authors recommend between 2 and 4)
     epochs = 4
-
-    sentences = ["[CLS] " + sentence + " [SEP]" for sentence in sentences]
-    labels = df.label.values
-
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
-    tokenized_texts = [tokenizer.tokenize(sent) for sent in sentences]
-    print(sentences[0])
-    MAX_LEN = 128
+    # tokenizer, max_seq_len, filename
+    training_set = IncongruityDataset(tokenizer=tokenizer, max_seq_len=MAX_SEQ_LEN, data_type=DataType.Train)
+    train_dataloader = data.DataLoader(training_set, batch_size=BATCH_SIZE, shuffle=True)
 
-    input_ids = [tokenizer.convert_tokens_to_ids(x) for x in tokenized_texts]
-    input_ids = pad_sequences(input_ids, maxlen=MAX_LEN, dtype="long", truncating="post", padding="post")
+    dev_set = IncongruityDataset(tokenizer=tokenizer, max_seq_len=MAX_SEQ_LEN, data_type=DataType.Dev)
+    dev_dataloader = data.DataLoader(dev_set, batch_size=BATCH_SIZE, shuffle=False)
 
+    test_set = IncongruityDataset(tokenizer=tokenizer, max_seq_len=MAX_SEQ_LEN, data_type=DataType.Dev)
+    test_dataloader = data.DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False)
 
-
-    model = BertPoolForIncongruity('bert-base-uncased', do_lower_case=True, hidden_dim=)
+    model = BertPoolForIncongruity('bert-base-uncased', do_lower_case=True, hidden_dim=HIDDEN_DIM)
     model.cuda()
 
+    if args.freeze:
+        model.freeze_bert_encoder()
+    else:
+        model.unfreeze_bert_encoder()
+
+    # Define optimizers
     optimizer = AdamW(model.parameters(), lr=lr,
                       correct_bias=False)  # To reproduce BertAdam specific behavior set correct_bias=False
     scheduler = WarmupLinearSchedule(optimizer, warmup_steps=num_warmup_steps, t_total=num_total_steps)
-
-    loss_fct = torch.nn.BCEWithLogitsLoss()
+    loss_fct = nn.BCEWithLogitsLoss()
     train_loss_set = []
-
 
     # trange is a tqdm wrapper around the normal python range
     for _ in trange(epochs, desc="Epoch"):
@@ -69,7 +108,7 @@ def main():
             optimizer.zero_grad()
 
             # Forward pass
-            logits = model.forward(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids)
+            logits = model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids)
             loss = loss_fct(logits.view(-1, 1), b_labels.view(-1, 1))
             train_loss_set.append(loss.item())
 
@@ -77,8 +116,7 @@ def main():
             loss.backward()
 
             # Update parameters and take a step using the computed gradient
-            torch.nn.utils.clip_grad_norm_(model.parameters(),
-                                           max_grad_norm)  # Gradient clipping is not in AdamW anymore (so you can use amp without issue)
+            nn.utils.clip_grad_norm_(model.parameters(), MAX_GRAD_NORM)
             scheduler.step()
             optimizer.step()
 
@@ -99,7 +137,7 @@ def main():
         nb_eval_steps, nb_eval_examples = 0, 0
 
         # Evaluate data for one epoch
-        for batch in validation_dataloader:
+        for batch in dev_dataloader:
             # Add batch to GPU
             batch = tuple(t.to(device) for t in batch)
             # Unpack the inputs from our dataloader
@@ -122,38 +160,6 @@ def main():
 
 
 
-
-    # Create attention masks
-    attention_masks = []
-
-    # Create a mask of 1s for each token followed by 0s for padding
-    for seq in input_ids:
-        seq_mask = [float(i > 0) for i in seq]
-        attention_masks.append(seq_mask)
-
-    train_inputs = torch.tensor(train_inputs)
-    validation_inputs = torch.tensor(validation_inputs)
-    train_labels = torch.tensor(train_labels)
-    validation_labels = torch.tensor(validation_labels)
-    train_masks = torch.tensor(train_masks)
-    validation_masks = torch.tensor(validation_masks)
-
-    # Select a batch size for training. For fine-tuning BERT on a specific task, the authors recommend a batch size of 16 or 32
-    batch_size = 32
-
-    # Create an iterator of our data with torch DataLoader. This helps save on memory during training because, unlike a for loop,
-    # with an iterator the entire dataset does not need to be loaded into memory
-
-    train_data = TensorDataset(train_inputs, train_masks, train_labels)
-    train_sampler = RandomSampler(train_data)
-    train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=batch_size)
-
-    validation_data = TensorDataset(validation_inputs, validation_masks, validation_labels)
-    validation_sampler = SequentialSampler(validation_data)
-    validation_dataloader = DataLoader(validation_data, sampler=validation_sampler, batch_size=batch_size)
-
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
 
 
