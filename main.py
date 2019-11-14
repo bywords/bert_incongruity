@@ -1,4 +1,5 @@
 # -*- encoding: utf-8 -*-
+import os
 import numpy as np
 import random
 import argparse
@@ -24,54 +25,49 @@ def main():
     parser = argparse.ArgumentParser()
 
     ## Required parameters
-    parser.add_argument("--train_data_file", default=None, type=str, required=True,
+    parser.add_argument("--mode", default=None, type=str, required=True,
+                        help="model: train / test")
+    parser.add_argument("--model_file", default=None, type=str, required=True,
                         help="The input training data file (a text file).")
     parser.add_argument("--output_dir", default=None, type=str, required=True,
                         help="The output directory where the model predictions and checkpoints will be written.")
 
     ## Other parameters
-    parser.add_argument("--eval_data_file", default=None, type=str,
-                        help="An optional input evaluation data file to evaluate the perplexity on (a text file).")
+    parser.add_argument("--freeze", default=False, type=bool, help="whether bert parameters are freezed")
+    parser.add_argument("--learning_rate", default=1e-3, type=float, help="Learning rate")
+    parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max values for gradient clipping")
+    parser.add_argument("--num_total_steps", default=1000, type=int, help="For AdamW Secheduler")
+    parser.add_argument("--num_warmup_steps", default=100, type=int, help="For AdamW Secheduler")
+    parser.add_argument("--max_seq_len", default=512, type=int, help="For AdamW Secheduler")
+    parser.add_argument("--batch_size", default=64, type=int, help="Batch size")
+    parser.add_argument("--hidden_dim", default=768, type=int, help="Hidden dims for headline and body text")
 
-    parser.add_argument("--model_type", default="bert", type=str,
-                        help="The model architecture to be fine-tuned.")
-    parser.add_argument("--model_name_or_path", default="bert-base-cased", type=str,
-                        help="The model checkpoint for weights initialization.")
     args = parser.parse_args()
 
-    # Setup logging
-    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
-                        datefmt='%m/%d/%Y %H:%M:%S',
-                        level=logging.INFO if args.local_rank in [-1, 0] else logging.WARN)
-    logger.warning("Process rank: %s, device: %s, n_gpu: %s, distributed training: %s, 16-bits training: %s",
-                   args.local_rank, device, args.n_gpu, bool(args.local_rank != -1), args.fp16)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # n_gpu = torch.cuda.device_count()
+    torch.cuda.get_device_name(0)
 
+    # Setup logging
+    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
+                        datefmt='%m/%d/%Y %H:%M:%S',
+                        level=logging.INFO)
+    logger = logging.getLogger("bert_incongruity")
     # Set seed
     set_seed(args)
 
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+    model_path = os.path.join(args.output_dir, args.model_file)
+
 
     # Parameters:
-    lr = 1e-3
-    max_grad_norm = 1.0
-    num_total_steps = 1000
-    num_warmup_steps = 100
-    warmup_proportion = float(num_warmup_steps) / float(num_total_steps)  # 0.1
 
     # Number of training epochs (authors recommend between 2 and 4)
     epochs = 4
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
-    # tokenizer, max_seq_len, filename
-    training_set = IncongruityDataset(tokenizer=tokenizer, max_seq_len=MAX_SEQ_LEN, data_type=DataType.Train)
-    train_dataloader = data.DataLoader(training_set, batch_size=BATCH_SIZE, shuffle=True)
-
-    dev_set = IncongruityDataset(tokenizer=tokenizer, max_seq_len=MAX_SEQ_LEN, data_type=DataType.Dev)
-    dev_dataloader = data.DataLoader(dev_set, batch_size=BATCH_SIZE, shuffle=False)
-
-    test_set = IncongruityDataset(tokenizer=tokenizer, max_seq_len=MAX_SEQ_LEN, data_type=DataType.Dev)
-    test_dataloader = data.DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False)
-
-    model = BertPoolForIncongruity('bert-base-uncased', do_lower_case=True, hidden_dim=HIDDEN_DIM)
+    model = BertPoolForIncongruity('bert-base-uncased', do_lower_case=True, hidden_size=args.hidden_dim)
     model.cuda()
 
     if args.freeze:
@@ -79,84 +75,134 @@ def main():
     else:
         model.unfreeze_bert_encoder()
 
-    # Define optimizers
-    optimizer = AdamW(model.parameters(), lr=lr,
-                      correct_bias=False)  # To reproduce BertAdam specific behavior set correct_bias=False
-    scheduler = WarmupLinearSchedule(optimizer, warmup_steps=num_warmup_steps, t_total=num_total_steps)
-    loss_fct = nn.BCEWithLogitsLoss()
-    train_loss_set = []
+    test_set = IncongruityDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Dev)
+    test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size, shuffle=False)
 
-    # trange is a tqdm wrapper around the normal python range
-    for _ in trange(epochs, desc="Epoch"):
+    if args.mode == "train":
 
-        # Training
+        # tokenizer, max_seq_len, filename
+        training_set = IncongruityDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Train)
+        train_dataloader = data.DataLoader(training_set, batch_size=args.batch_size, shuffle=True)
 
-        # Set our model to training mode (as opposed to evaluation mode)
-        model.train()
+        dev_set = IncongruityDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Dev)
+        dev_dataloader = data.DataLoader(dev_set, batch_size=args.batch_size, shuffle=False)
 
-        # Tracking variables
-        tr_loss = 0
-        nb_tr_examples, nb_tr_steps = 0, 0
+        # Define optimizers
+        optimizer = AdamW(model.parameters(), lr=args.learning_rate,
+                          correct_bias=False)  # To reproduce BertAdam specific behavior set correct_bias=False
+        scheduler = WarmupLinearSchedule(optimizer, warmup_steps=args.num_warmup_steps, t_total=args.num_total_steps)
+        loss_fct = nn.BCEWithLogitsLoss()
+        train_loss_set = []
 
-        # Train the data for one epoch
-        for step, batch in enumerate(train_dataloader):
-            # Add batch to GPU
-            batch = tuple(t.to(device) for t in batch)
-            # Unpack the inputs from our dataloader
-            b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids, b_labels = batch
-            # Clear out the gradients (by default they accumulate)
-            optimizer.zero_grad()
+        # trange is a tqdm wrapper around the normal python range
+        for _ in trange(epochs, desc="Epoch"):
 
-            # Forward pass
-            logits = model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids)
-            loss = loss_fct(logits.view(-1, 1), b_labels.view(-1, 1))
-            train_loss_set.append(loss.item())
+            # Training
 
-            # Backward pass
-            loss.backward()
+            # Set our model to training mode (as opposed to evaluation mode)
+            model.train()
 
-            # Update parameters and take a step using the computed gradient
-            nn.utils.clip_grad_norm_(model.parameters(), MAX_GRAD_NORM)
-            scheduler.step()
-            optimizer.step()
+            # Tracking variables
+            tr_loss = 0
+            nb_tr_examples, nb_tr_steps = 0, 0
 
-            # Update tracking variables
-            tr_loss += loss.item()
-            nb_tr_examples += b_head_input_ids.size(0)
-            nb_tr_steps += 1
+            # Train the data for one epoch
+            for step, batch in enumerate(train_dataloader):
+                # Add batch to GPU
+                batch = tuple(t.to(device) for t in batch)
+                # Unpack the inputs from our dataloader
+                b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids, b_labels = batch
+                # Clear out the gradients (by default they accumulate)
+                optimizer.zero_grad()
 
-        print("Train loss: {}".format(tr_loss / nb_tr_steps))
+                # Forward pass
+                logits = model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids)
+                loss = loss_fct(logits.view(-1, 1), b_labels.view(-1, 1))
+                train_loss_set.append(loss.item())
 
-        # Validation
+                # Backward pass
+                loss.backward()
 
-        # Put model in evaluation mode to evaluate loss on the validation set
-        model.eval()
+                # Update parameters and take a step using the computed gradient
+                nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+                scheduler.step()
+                optimizer.step()
 
-        # Tracking variables
-        eval_loss, eval_accuracy = 0, 0
-        nb_eval_steps, nb_eval_examples = 0, 0
+                # Update tracking variables
+                tr_loss += loss.item()
+                nb_tr_examples += b_head_input_ids.size(0)
+                nb_tr_steps += 1
 
-        # Evaluate data for one epoch
-        for batch in dev_dataloader:
-            # Add batch to GPU
-            batch = tuple(t.to(device) for t in batch)
-            # Unpack the inputs from our dataloader
-            b_input_ids, b_input_mask, b_labels = batch
-            # Telling the model not to compute or store gradients, saving memory and speeding up validation
-            with torch.no_grad():
-                # Forward pass, calculate logit predictions
-                logits = model(b_input_ids, token_type_ids=None, attention_mask=b_input_mask)
+            logger.info("Train loss: {}".format(tr_loss / nb_tr_steps))
 
-            # Move logits and labels to CPU
-            logits = logits.detach().cpu().numpy()
-            label_ids = b_labels.to('cpu').numpy()
+            # Validation
 
-            tmp_eval_accuracy = flat_accuracy(logits, label_ids)
+            # Put model in evaluation mode to evaluate loss on the validation set
+            model.eval()
 
-            eval_accuracy += tmp_eval_accuracy
-            nb_eval_steps += 1
+            # Tracking variables
+            eval_loss, eval_accuracy = 0, 0
+            nb_eval_steps, nb_eval_examples = 0, 0
 
-        print("Validation Accuracy: {}".format(eval_accuracy / nb_eval_steps))
+            # Evaluate data for one epoch
+            for batch in dev_dataloader:
+                # Add batch to GPU
+                batch = tuple(t.to(device) for t in batch)
+                # Unpack the inputs from our dataloader
+                b_input_ids, b_input_mask, b_labels = batch
+                # Telling the model not to compute or store gradients, saving memory and speeding up validation
+                with torch.no_grad():
+                    # Forward pass, calculate logit predictions
+                    logits = model(b_input_ids, token_type_ids=None, attention_mask=b_input_mask)
+
+                # Move logits and labels to CPU
+                logits = logits.detach().cpu().numpy()
+                label_ids = b_labels.to('cpu').numpy()
+
+                tmp_eval_accuracy = flat_accuracy(logits, label_ids)
+
+                eval_accuracy += tmp_eval_accuracy
+                nb_eval_steps += 1
+
+            logger.info("Validation Accuracy: {}".format(eval_accuracy / nb_eval_steps))
+
+        torch.save(model.state_dict(), model_path)
+
+    elif args.mode == "test":
+        model = torch.load_state_dict(torch.load(model_path))
+
+    else:
+        raise TypeError("args.model should be train or test.")
+
+    # Tracking variables
+    test_loss, test_accuracy = 0, 0
+    nb_test_steps, nb_test_examples = 0, 0
+
+    # Evaluate test data for one epoch
+    for batch in test_dataloader:
+        # Add batch to GPU
+        batch = tuple(t.to(device) for t in batch)
+        # Unpack the inputs from our dataloader
+        b_input_ids, b_input_mask, b_labels = batch
+        # Telling the model not to compute or store gradients, saving memory and speeding up validation
+        with torch.no_grad():
+            # Forward pass, calculate logit predictions
+            logits = model(b_input_ids, token_type_ids=None, attention_mask=b_input_mask)
+
+        # Move logits and labels to CPU
+        logits = logits.detach().cpu().numpy()
+        label_ids = b_labels.to('cpu').numpy()
+
+        tmp_test_accuracy = flat_accuracy(logits, label_ids)
+
+        test_accuracy += tmp_test_accuracy
+        nb_test_steps += 1
+
+    logger.info("Test Accuracy: {}".format(test_accuracy / nb_test_steps))
+
+
+
+
 
 
 
