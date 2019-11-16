@@ -6,8 +6,6 @@ import argparse
 import torch
 import logging
 
-print(1)
-
 from torch import nn
 from torch.utils import data
 from tqdm import trange
@@ -17,8 +15,6 @@ from data_utils import IncongruityDataset, DataType, flat_accuracy
 from bert_pool import BertPoolForIncongruity
 
 
-print(2)
-
 def set_seed(args):
     random.seed(args.seed)
     np.random.seed(args.seed)
@@ -27,31 +23,9 @@ def set_seed(args):
         torch.cuda.manual_seed_all(args.seed)
 
 
-def main():
-    parser = argparse.ArgumentParser()
-
-    ## Required parameters
-    parser.add_argument("--mode", default=None, type=str, required=True,
-                        help="model: train / test")
-    parser.add_argument("--model_file", default=None, type=str, required=True,
-                        help="The input training data file (a text file).")
-    parser.add_argument("--output_dir", default=None, type=str, required=True,
-                        help="The output directory where the model predictions and checkpoints will be written.")
-
-    ## Other parameters
-    parser.add_argument("--seed", default=False, type=float, help="floating value for random seed")
-    parser.add_argument("--freeze", default=False, type=bool, help="whether bert parameters are freezed")
-    parser.add_argument("--learning_rate", default=1e-3, type=float, help="Learning rate")
-    parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max values for gradient clipping")
-    parser.add_argument("--num_total_steps", default=1000, type=int, help="For AdamW Secheduler")
-    parser.add_argument("--num_warmup_steps", default=100, type=int, help="For AdamW Secheduler")
-    parser.add_argument("--max_seq_len", default=512, type=int, help="For AdamW Secheduler")
-    parser.add_argument("--batch_size", default=64, type=int, help="Batch size")
-    parser.add_argument("--hidden_dim", default=768, type=int, help="Hidden dims for headline and body text")
-
-    args = parser.parse_args()
-
-    print("1")
+def main(args):
+    print(type(args))
+    exit()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # n_gpu = torch.cuda.device_count()
@@ -64,8 +38,6 @@ def main():
     logger = logging.getLogger("bert_incongruity")
     # Set seed
     set_seed(args)
-
-    print("2")
 
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
@@ -212,6 +184,30 @@ def main():
     logger.info("Test Accuracy: {}".format(test_accuracy / nb_test_steps))
 
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+
+    ## Required parameters
+    parser.add_argument("--mode", default=None, type=str, required=True,
+                        help="model: train / test")
+    parser.add_argument("--model_file", default=None, type=str, required=True,
+                        help="The input training data file (a text file).")
+    parser.add_argument("--output_dir", default=None, type=str, required=True,
+                        help="The output directory where the model predictions and checkpoints will be written.")
+
+    ## Other parameters
+    parser.add_argument("--seed", default=False, type=float, help="floating value for random seed")
+    parser.add_argument("--freeze", default=False, type=bool, help="whether bert parameters are freezed")
+    parser.add_argument("--learning_rate", default=1e-3, type=float, help="Learning rate")
+    parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max values for gradient clipping")
+    parser.add_argument("--num_total_steps", default=1000, type=int, help="For AdamW Secheduler")
+    parser.add_argument("--num_warmup_steps", default=100, type=int, help="For AdamW Secheduler")
+    parser.add_argument("--max_seq_len", default=512, type=int, help="For AdamW Secheduler")
+    parser.add_argument("--batch_size", default=64, type=int, help="Batch size")
+    parser.add_argument("--hidden_dim", default=768, type=int, help="Hidden dims for headline and body text")
+
+    args = parser.parse_args()
+    main(args)
 
 
 
