@@ -4,7 +4,7 @@ import numpy as np
 import enum
 import torch
 import pandas as pd
-from keras.preprocessing.sequence import pad_sequences
+#from keras.preprocessing.sequence import pad_sequences
 from torch.utils import data
 
 bert_input_template = "[CLS] {} [SEP]"
@@ -54,8 +54,8 @@ class IncongruityDataset(data.Dataset):
         headlines = [tokenizer.convert_tokens_to_ids(x) for x in headlines]
         bodytexts = [tokenizer.convert_tokens_to_ids(x) for x in bodytexts]
 
-        headlines = pad_sequences(headlines, maxlen=max_seq_len, dtype="long", truncating="post", padding="post")
-        bodytexts = pad_sequences(bodytexts, maxlen=max_seq_len, dtype="long", truncating="post", padding="post")
+        #headlines = pad_sequences(headlines, maxlen=max_seq_len, dtype="long", truncating="post", padding="post")
+        #bodytexts = pad_sequences(bodytexts, maxlen=max_seq_len, dtype="long", truncating="post", padding="post")
 
         # Create attention masks
         head_attention_masks, body_attention_masks = [], []
