@@ -16,19 +16,17 @@ from bert_pool import BertPoolForIncongruity
 
 
 def set_seed(args):
+    n_gpu = torch.cuda.device_count()
+
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
-    if args.n_gpu > 0:
+    if n_gpu > 0:
         torch.cuda.manual_seed_all(args.seed)
 
 
 def main(args):
-    print(type(args))
-    exit()
-
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # n_gpu = torch.cuda.device_count()
     torch.cuda.get_device_name(0)
 
     # Setup logging
