@@ -45,6 +45,8 @@ def main():
 
     args = parser.parse_args()
 
+    print("1")
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # n_gpu = torch.cuda.device_count()
     torch.cuda.get_device_name(0)
@@ -56,6 +58,8 @@ def main():
     logger = logging.getLogger("bert_incongruity")
     # Set seed
     set_seed(args)
+
+    print("2")
 
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
