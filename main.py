@@ -5,6 +5,9 @@ import random
 import argparse
 import torch
 import logging
+
+print(1)
+
 from torch import nn
 from torch.utils import data
 from tqdm import trange
@@ -13,6 +16,8 @@ from transformers import BertTokenizer, AdamW, WarmupLinearSchedule
 from data_utils import IncongruityDataset, DataType, flat_accuracy
 from bert_pool import BertPoolForIncongruity
 
+
+print(2)
 
 def set_seed(args):
     random.seed(args.seed)
