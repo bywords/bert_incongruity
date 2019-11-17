@@ -98,11 +98,18 @@ def main(args):
 
             # Train the data for one epoch
             for step, batch in enumerate(train_dataloader):
-                print(type(batch))
-                print(len(batch))
                 print(type(batch[0]))
-                print(batch[0])
                 print(batch[0].size())
+                print(type(batch[1]))
+                print(batch[1].size())
+                print(type(batch[2]))
+                print(batch[2].size())
+                print(type(batch[3]))
+                print(batch[3].size())
+                print(type(batch[4]))
+                print(batch[4].size())
+                exit()
+
 
                 # Add batch to GPU
                 batch = tuple(t.to(device) for t in batch)
