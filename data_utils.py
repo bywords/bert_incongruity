@@ -152,16 +152,6 @@ class IncongruityIterableDataset(IterableDataset):
         headline_mask = np.array([float(i > 0) for i in headline])
         bodytext_mask = np.array([float(i > 0) for i in bodytext])
 
-        print(headline.shape)
-        print(bodytext.shape)
-
-        print(headline_mask.shape)
-        print(bodytext_mask.shape)
-
-        print(np.array([label]).shape)
-
-        exit()
-
         return headline, bodytext, headline_mask, bodytext_mask, np.array([label])
 
 
