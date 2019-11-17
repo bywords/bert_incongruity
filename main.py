@@ -218,7 +218,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_total_steps", default=1000, type=int, help="For AdamW Secheduler")
     parser.add_argument("--num_warmup_steps", default=100, type=int, help="For AdamW Secheduler")
     parser.add_argument("--max_seq_len", default=512, type=int, help="For AdamW Secheduler")
-    parser.add_argument("--batch_size", default=32, type=int, help="Batch size")
+    parser.add_argument("--batch_size", default=64, type=int, help="Batch size")
     parser.add_argument("--max_epochs", default=2, type=int, help="Number of max epochs for training. btw 2 and 4 are recommended.")
     parser.add_argument("--hidden_dim", default=768, type=int, help="Hidden dims for headline and body text")
     parser.add_argument("--gpu_id", default=2, type=int, help="cuda device index")
