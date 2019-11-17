@@ -14,6 +14,7 @@ from transformers import BertTokenizer, AdamW, WarmupLinearSchedule
 from data_utils import IncongruityIterableDataset, DataType, flat_accuracy
 from bert_pool import BertPoolForIncongruity
 
+
 # To disable kears warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -28,8 +29,8 @@ def set_seed(args):
 
 
 def main(args):
+    torch.cuda_device(args.gpu_id)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    torch.cuda.get_device_name(0)
 
     # output setups
     exp_dir = os.path.join(args.output_dir, args.exp_id)
@@ -215,6 +216,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", default=64, type=int, help="Batch size")
     parser.add_argument("--max_epochs", default=2, type=int, help="Number of max epochs for training. btw 2 and 4 are recommended.")
     parser.add_argument("--hidden_dim", default=768, type=int, help="Hidden dims for headline and body text")
+    parser.add_argument("--gpu_id", default=2, type=int, help="cuda device index")
 
     args = parser.parse_args()
     main(args)
