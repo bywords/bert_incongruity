@@ -90,7 +90,7 @@ def main(args):
         # trange is a tqdm wrapper around the normal python range
         for e_idx in range(1, epochs+1):
 
-            logger.info("Epoch {} - Start Traning".format(e_idx))
+            logger.info("Epoch {} - Start Training".format(e_idx))
 
             # Set our model to training mode (as opposed to evaluation mode)
             model.train()
@@ -100,7 +100,10 @@ def main(args):
             nb_tr_examples, nb_tr_steps = 0, 0
 
             # Train the data for one epoch
+
             for step, batch in enumerate(train_dataloader):
+                if step % 100 == 0:
+                    logger.info("Epoch {} - Step {}".format(e_idx, step))
                 # Add batch to GPU
                 batch = tuplify_with_device(batch, device)
                 # Unpack the inputs from our dataloader
