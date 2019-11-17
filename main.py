@@ -100,7 +100,9 @@ def main(args):
             # Train the data for one epoch
             for step, batch in enumerate(train_dataloader):
                 # Add batch to GPU
-                batch = tuple(t.to(device, dtype=torch.long) for t in batch)
+                batch = tuple(batch[0].to(device, dtype=torch.long), batch[1].to(device, dtype=torch.long),
+                              batch[2].to(device, dtype=torch.long), batch[3].to(device, dtype=torch.long),
+                              batch[4].to(device, dtype=torch.float))
                 # Unpack the inputs from our dataloader
                 b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids, labels = batch
                 # Clear out the gradients (by default they accumulate)
