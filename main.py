@@ -11,7 +11,7 @@ from torch.utils import data
 from tqdm import trange
 from transformers import BertTokenizer, AdamW, WarmupLinearSchedule
 
-from data_utils import IncongruityIterableDataset, DataType, flat_accuracy
+from data_utils import IncongruityIterableDataset, DataType, flat_accuracy, tuplify_with_device
 from bert_pool import BertPoolForIncongruity
 
 
@@ -100,9 +100,7 @@ def main(args):
             # Train the data for one epoch
             for step, batch in enumerate(train_dataloader):
                 # Add batch to GPU
-                batch = tuple(batch[0].to(device, dtype=torch.long), batch[1].to(device, dtype=torch.long),
-                              batch[2].to(device, dtype=torch.long), batch[3].to(device, dtype=torch.long),
-                              batch[4].to(device, dtype=torch.float))
+                batch = tuplify_with_device(batch, device)
                 # Unpack the inputs from our dataloader
                 b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids, labels = batch
                 # Clear out the gradients (by default they accumulate)
@@ -140,7 +138,7 @@ def main(args):
             # Evaluate data for one epoch
             for batch in dev_dataloader:
                 # Add batch to GPU
-                batch = tuple(t.to(device, dtype=torch.long) for t in batch)
+                batch = tuplify_with_device(batch, device)
                 # Unpack the inputs from our dataloader
                 b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids, labels = batch
                 # Telling the model not to compute or store gradients, saving memory and speeding up validation
@@ -175,7 +173,7 @@ def main(args):
     # Evaluate test data for one epoch
     for batch in test_dataloader:
         # Add batch to GPU
-        batch = tuple(t.to(device) for t in batch)
+        batch = tuplify_with_device(batch, device)
         # Unpack the inputs from our dataloader
         b_input_ids, b_input_mask, b_labels = batch
         # Telling the model not to compute or store gradients, saving memory and speeding up validation

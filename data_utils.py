@@ -160,3 +160,9 @@ def flat_accuracy(preds, labels):
     pred_flat = np.argmax(preds, axis=1).flatten()
     labels_flat = labels.flatten()
     return np.sum(pred_flat == labels_flat) / len(labels_flat)
+
+
+def tuplify_with_device(batch, device):
+    return tuple([batch[0].to(device, dtype=torch.long), batch[1].to(device, dtype=torch.long),
+                  batch[2].to(device, dtype=torch.long), batch[3].to(device, dtype=torch.long),
+                  batch[4].to(device, dtype=torch.float)])
