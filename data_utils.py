@@ -57,8 +57,8 @@ class IncongruityDataset(data.Dataset):
         headlines = pad_sequences(headlines, maxlen=max_seq_len, dtype="long", truncating="post", padding="post")
         bodytexts = pad_sequences(bodytexts, maxlen=max_seq_len, dtype="long", truncating="post", padding="post")
 
-        print(headlines[0])
-        print(bodytexts[0])
+        print(headlines.shape)
+        print(bodytexts.shape)
         exit()
 
         # Create attention masks
@@ -71,6 +71,8 @@ class IncongruityDataset(data.Dataset):
         for seq in bodytexts:
             seq_mask = [float(i > 0) for i in seq]
             body_attention_masks.append(seq_mask)
+
+        self.headlines =
 
         self.df = pd.DataFrame({"headline": headlines, "bodytext": bodytexts,
                                 "headline_mask": head_attention_masks, "bodytext_mask": body_attention_masks,
