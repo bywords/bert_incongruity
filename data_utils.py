@@ -57,6 +57,10 @@ class IncongruityDataset(data.Dataset):
         headlines = pad_sequences(headlines, maxlen=max_seq_len, dtype="long", truncating="post", padding="post")
         bodytexts = pad_sequences(bodytexts, maxlen=max_seq_len, dtype="long", truncating="post", padding="post")
 
+        print(headlines[0])
+        print(bodytexts[0])
+        exit()
+
         # Create attention masks
         head_attention_masks, body_attention_masks = [], []
         # Create a mask of 1s for each token followed by 0s for padding
