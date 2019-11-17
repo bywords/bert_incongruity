@@ -45,12 +45,9 @@ def main(args):
                         level=logging.INFO)
     logger = logging.getLogger("bert_incongruity")
 
-    s_handler = logging.StreamHandler()
     f_handler = logging.FileHandler(log_file)
-    s_handler.setLevel(logging.INFO)
     f_handler.setLevel(logging.INFO)
 
-    logger.addHandler(s_handler)
     logger.addHandler(f_handler)
 
     # Set seed
