@@ -29,20 +29,28 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     torch.cuda.get_device_name(0)
 
+    # output setups
+    exp_dir = os.path.join(args.output_dir, args.exp_id)
+    if not os.path.exists(exp_dir):
+        os.makedirs(exp_dir)
+    log_file = os.path.join(exp_dir, "logs.txt")
+    model_path = os.path.join(exp_dir, args.model_file)
+
     # Setup logging
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
-                        datefmt='%m/%d/%Y %H:%M:%S',
-                        level=logging.INFO)
+                        datefmt='%m/%d/%Y %H:%M:%S')
     logger = logging.getLogger("bert_incongruity")
+
+    s_handler = logging.StreamHandler()
+    f_handler = logging.FileHandler(log_file)
+    s_handler.setLevel(logging.INFO)
+    f_handler.setLevel(logging.INFO)
+
+    logger.addHandler(s_handler)
+    logger.addHandler(f_handler)
+
     # Set seed
     set_seed(args)
-
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
-    model_path = os.path.join(args.output_dir, args.model_file)
-
-
-    # Parameters:
 
     # Number of training epochs (authors recommend between 2 and 4)
     epochs = 4
@@ -77,8 +85,6 @@ def main(args):
 
         # trange is a tqdm wrapper around the normal python range
         for _ in trange(epochs, desc="Epoch"):
-
-            # Training
 
             # Set our model to training mode (as opposed to evaluation mode)
             model.train()
@@ -153,6 +159,7 @@ def main(args):
         model = torch.load_state_dict(torch.load(model_path))
 
     else:
+        logging.error("Wrong mode: {}".format(args.mode))
         raise TypeError("args.model should be train or test.")
 
     # Tracking variables
@@ -190,10 +197,11 @@ if __name__ == "__main__":
                         help="model: train / test")
     parser.add_argument("--model_file", default=None, type=str, required=True,
                         help="The input training data file (a text file).")
-    parser.add_argument("--output_dir", default=None, type=str, required=True,
+    parser.add_argument("--exp_id", default=None, type=str, required=True,
                         help="The output directory where the model predictions and checkpoints will be written.")
 
     ## Other parameters
+    parser.add_argument("--output_dir", default="output/", type=str, help="root directory for output")
     parser.add_argument("--seed", default=False, type=float, help="floating value for random seed")
     parser.add_argument("--freeze", default=False, type=bool, help="whether bert parameters are freezed")
     parser.add_argument("--learning_rate", default=1e-3, type=float, help="Learning rate")
