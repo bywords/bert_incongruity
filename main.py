@@ -126,7 +126,7 @@ def main(args):
                 nb_tr_examples += b_head_input_ids.size(0)
                 nb_tr_steps += 1
 
-            logger.info("Epoch {} - Train loss: {}".format(e_idx, tr_loss / nb_tr_steps))
+            logger.info("Epoch {} - Train loss: {.4f}".format(e_idx, tr_loss / nb_tr_steps))
 
             # Validation
 
@@ -160,7 +160,7 @@ def main(args):
             dev_acc = accuracy_score(dev_y_targets, dev_y_preds)
             dev_auroc = roc_auc_score(dev_y_targets, dev_y_preds)
 
-            logger.info("Epoch {} - Dev Acc: {0:.4f} AUROC: {0:.4f}".format(e_idx, dev_acc, dev_auroc))
+            logger.info("Epoch {} - Dev Acc: {:.4f} AUROC: {:.4f}".format(e_idx, dev_acc, dev_auroc))
 
         torch.save(model.state_dict(), model_path)
 
@@ -195,7 +195,7 @@ def main(args):
 
     acc = accuracy_score(y_targets, y_preds)
     auroc = roc_auc_score(y_targets, y_preds)
-    logger.info("Test Accuracy: {0:.4f}, AUROC: {0:.4f}".format(acc, auroc))
+    logger.info("Test Accuracy: {:.4f}, AUROC: {:.4f}".format(acc, auroc))
 
 
 if __name__ == "__main__":
