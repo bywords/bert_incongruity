@@ -101,7 +101,7 @@ def main(args):
 
             for step, batch in enumerate(train_dataloader):
                 if step % 10 == 0:
-                    logger.info("Epoch {} - Step {}".format(e_idx, step))
+                    logger.info("Epoch {} - Iteration {}".format(e_idx, step*args.batch_size))
                 # Add batch to GPU
                 batch = tuplify_with_device(batch, device)
                 # Unpack the inputs from our dataloader
@@ -146,13 +146,13 @@ def main(args):
                 # Telling the model not to compute or store gradients, saving memory and speeding up validation
                 with torch.no_grad():
                     # Forward pass, calculate logit predictions
-                    logits = nn.sigmoid(model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids))
+                    preds = nn.sigmoid(model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids))
 
                 # Move logits and labels to CPU
-                logits = logits.detach().cpu().numpy()
+                preds = preds.detach().cpu().numpy()
                 label_ids = labels.to('cpu').numpy()
 
-                dev_y_preds.append(logits)
+                dev_y_preds.append(preds)
                 dev_y_targets.append(label_ids)
 
             dev_y_preds = np.concatenate(dev_y_preds)
@@ -178,17 +178,17 @@ def main(args):
         # Add batch to GPU
         batch = tuplify_with_device(batch, device)
         # Unpack the inputs from our dataloader
-        b_input_ids, b_input_mask, b_labels = batch
+        b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids, labels = batch
         # Telling the model not to compute or store gradients, saving memory and speeding up validation
         with torch.no_grad():
             # Forward pass, calculate logit predictions
-            logits = nn.sigmoid(model(b_input_ids, token_type_ids=None, attention_mask=b_input_mask))
+            preds = nn.sigmoid(model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids))
 
         # Move logits and labels to CPU
-        logits = logits.detach().cpu().numpy()
-        label_ids = b_labels.to('cpu').numpy()
+        preds = preds.detach().cpu().numpy()
+        label_ids = labels.to('cpu').numpy()
 
-        y_preds.append(logits)
+        y_preds.append(preds)
         y_targets.append(label_ids)
 
     y_preds = np.concatenate(y_preds)
