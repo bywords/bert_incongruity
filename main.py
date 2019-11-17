@@ -99,7 +99,7 @@ def main(args):
             # Train the data for one epoch
             for step, batch in enumerate(train_dataloader):
                 # Add batch to GPU
-                batch = tuple(t.to(device) for t in batch)
+                batch = tuple(t.to(device, dtype=torch.long) for t in batch)
                 # Unpack the inputs from our dataloader
                 b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids, b_labels = batch
                 # Clear out the gradients (by default they accumulate)
@@ -137,17 +137,17 @@ def main(args):
             # Evaluate data for one epoch
             for batch in dev_dataloader:
                 # Add batch to GPU
-                batch = tuple(t.to(device) for t in batch)
+                batch = tuple(t.to(device, dtype=torch.long) for t in batch)
                 # Unpack the inputs from our dataloader
-                b_input_ids, b_input_mask, b_labels = batch
+                b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids, labels = batch
                 # Telling the model not to compute or store gradients, saving memory and speeding up validation
                 with torch.no_grad():
                     # Forward pass, calculate logit predictions
-                    logits = model(b_input_ids, token_type_ids=None, attention_mask=b_input_mask)
+                    logits = model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids)
 
                 # Move logits and labels to CPU
                 logits = logits.detach().cpu().numpy()
-                label_ids = b_labels.to('cpu').numpy()
+                label_ids = labels.to('cpu').numpy()
 
                 tmp_eval_accuracy = flat_accuracy(logits, label_ids)
 
