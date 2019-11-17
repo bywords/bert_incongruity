@@ -159,7 +159,8 @@ class IncongruityIterableDataset(IterableDataset):
         print(headline_mask.shape)
         print(bodytext_mask.shape)
 
-        print(label.shape)
+        print(np.array(label).shape)
+        print(np.array([label]).shape)
 
         exit()
 
