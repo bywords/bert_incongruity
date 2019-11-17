@@ -72,7 +72,7 @@ class IncongruityDataset(data.Dataset):
             seq_mask = [float(i > 0) for i in seq]
             body_attention_masks.append(seq_mask)
 
-        self.headlines =
+        #self.headlines =
 
         self.df = pd.DataFrame({"headline": headlines, "bodytext": bodytexts,
                                 "headline_mask": head_attention_masks, "bodytext_mask": body_attention_masks,
