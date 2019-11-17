@@ -116,8 +116,8 @@ def main(args):
 
                 # Update parameters and take a step using the computed gradient
                 nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
-                scheduler.step()
                 optimizer.step()
+                scheduler.step()
 
                 # Update tracking variables
                 tr_loss += loss.item()
