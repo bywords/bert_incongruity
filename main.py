@@ -66,17 +66,18 @@ def main(args):
     else:
         model.unfreeze_bert_encoder()
 
+    # cannot shuffle with iterable dataset
     test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Dev)
-    test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size, shuffle=False)
+    test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
 
     if args.mode == "train":
 
         # tokenizer, max_seq_len, filename
         training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Train)
-        train_dataloader = data.DataLoader(training_set, batch_size=args.batch_size, shuffle=True)
+        train_dataloader = data.DataLoader(training_set, batch_size=args.batch_size)
 
         dev_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Dev)
-        dev_dataloader = data.DataLoader(dev_set, batch_size=args.batch_size, shuffle=False)
+        dev_dataloader = data.DataLoader(dev_set, batch_size=args.batch_size)
 
         # Define optimizers
         optimizer = AdamW(model.parameters(), lr=args.learning_rate,
