@@ -14,6 +14,8 @@ from transformers import BertTokenizer, AdamW, WarmupLinearSchedule
 from data_utils import IncongruityIterableDataset, DataType, flat_accuracy
 from bert_pool import BertPoolForIncongruity
 
+# To disable kears warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 def set_seed(args):
     n_gpu = torch.cuda.device_count()
