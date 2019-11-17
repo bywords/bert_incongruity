@@ -26,8 +26,8 @@ class BertPoolForIncongruity(nn.Module):
         bodytext_mean_hidden = torch.transpose(bodytext_mean_hidden, 1, 2)    # (batch, hidden_dim, 1)
 
         # (batch, 1)
-        logits = torch.sigmoid(torch.matmul(torch.matmul(headline_mean_hidden, self.similarity),
-                                            bodytext_mean_hidden) + self.similarity_bias)
+        logits = torch.matmul(torch.matmul(headline_mean_hidden, self.similarity),
+                              bodytext_mean_hidden) + self.similarity_bias
 
         return logits.view(-1, 1)
 
