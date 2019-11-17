@@ -145,13 +145,12 @@ class IncongruityIterableDataset(IterableDataset):
                     for x in self.tokenizer.tokenize(bert_input_template.format(headline))]
         bodytext = [self.tokenizer.convert_tokens_to_ids(x)
                     for x in self.tokenizer.tokenize(bert_input_template.format(bodytext))]
-        headline_mask = np.array([float(i > 0) for i in headline])
-        bodytext_mask = np.array([float(i > 0) for i in bodytext])
-
         headline = pad_sequences([headline], maxlen=self.max_seq_len,
                                  dtype="long", truncating="post", padding="post")[0, :]
         bodytext = pad_sequences([bodytext], maxlen=self.max_seq_len,
                                  dtype="long", truncating="post", padding="post")[0, :]
+        headline_mask = np.array([float(i > 0) for i in headline])
+        bodytext_mask = np.array([float(i > 0) for i in bodytext])
 
         print(headline.shape)
         print(bodytext.shape)
