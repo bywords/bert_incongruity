@@ -100,7 +100,7 @@ def main(args):
             # Train the data for one epoch
 
             for step, batch in enumerate(train_dataloader):
-                if step % 100 == 0:
+                if step % 10 == 0:
                     logger.info("Epoch {} - Step {}".format(e_idx, step))
                 # Add batch to GPU
                 batch = tuplify_with_device(batch, device)
