@@ -8,7 +8,7 @@ import logging
 
 from torch import nn
 from torch.utils import data
-from tqdm import trange
+from sklearn.metrics import accuracy_score, roc_auc_score
 from transformers import BertTokenizer, AdamW, WarmupLinearSchedule
 
 from data_utils import IncongruityIterableDataset, DataType, flat_accuracy, tuplify_with_device
@@ -88,7 +88,9 @@ def main(args):
         train_loss_set = []
 
         # trange is a tqdm wrapper around the normal python range
-        for _ in trange(epochs, desc="Epoch"):
+        for e_idx in range(1, epochs+1):
+
+            logger.info("Epoch {} - Start Traning".format(e_idx))
 
             # Set our model to training mode (as opposed to evaluation mode)
             model.train()
@@ -124,7 +126,7 @@ def main(args):
                 nb_tr_examples += b_head_input_ids.size(0)
                 nb_tr_steps += 1
 
-            logger.info("Train loss: {}".format(tr_loss / nb_tr_steps))
+            logger.info("Epoch {} - Train loss: {}".format(e_idx, tr_loss / nb_tr_steps))
 
             # Validation
 
@@ -132,8 +134,7 @@ def main(args):
             model.eval()
 
             # Tracking variables
-            eval_loss, eval_accuracy = 0, 0
-            nb_eval_steps, nb_eval_examples = 0, 0
+            dev_y_preds, dev_y_targets = [], []
 
             # Evaluate data for one epoch
             for batch in dev_dataloader:
@@ -150,12 +151,16 @@ def main(args):
                 logits = logits.detach().cpu().numpy()
                 label_ids = labels.to('cpu').numpy()
 
-                tmp_eval_accuracy = flat_accuracy(logits, label_ids)
+                dev_y_preds.append(logits)
+                dev_y_targets.append(label_ids)
 
-                eval_accuracy += tmp_eval_accuracy
-                nb_eval_steps += 1
+            dev_y_preds = np.concatenate(dev_y_preds)
+            dev_y_targets = np.concatenate(dev_y_targets)
 
-            logger.info("Validation Accuracy: {}".format(eval_accuracy / nb_eval_steps))
+            dev_acc = accuracy_score(dev_y_targets, dev_y_preds)
+            dev_auroc = roc_auc_score(dev_y_targets, dev_y_preds)
+
+            logger.info("Epoch {} - Dev Acc: {0:.4f} AUROC: {0:.4f}".format(e_idx, dev_acc, dev_auroc))
 
         torch.save(model.state_dict(), model_path)
 
@@ -166,11 +171,8 @@ def main(args):
         logging.error("Wrong mode: {}".format(args.mode))
         raise TypeError("args.model should be train or test.")
 
-    # Tracking variables
-    test_loss, test_accuracy = 0, 0
-    nb_test_steps, nb_test_examples = 0, 0
-
     # Evaluate test data for one epoch
+    y_targets, y_preds = [], []
     for batch in test_dataloader:
         # Add batch to GPU
         batch = tuplify_with_device(batch, device)
@@ -185,12 +187,15 @@ def main(args):
         logits = logits.detach().cpu().numpy()
         label_ids = b_labels.to('cpu').numpy()
 
-        tmp_test_accuracy = flat_accuracy(logits, label_ids)
+        y_preds.append(logits)
+        y_targets.append(label_ids)
 
-        test_accuracy += tmp_test_accuracy
-        nb_test_steps += 1
+    y_preds = np.concatenate(y_preds)
+    y_targets = np.concatenate(y_targets)
 
-    logger.info("Test Accuracy: {}".format(test_accuracy / nb_test_steps))
+    acc = accuracy_score(y_targets, y_preds)
+    auroc = roc_auc_score(y_targets, y_preds)
+    logger.info("Test Accuracy: {0:.4f}, AUROC: {0:.4f}".format(acc, auroc))
 
 
 if __name__ == "__main__":
