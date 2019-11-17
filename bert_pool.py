@@ -29,7 +29,7 @@ class BertPoolForIncongruity(nn.Module):
         logits = torch.sigmoid(torch.matmul(torch.matmul(headline_mean_hidden, self.similarity),
                                             bodytext_mean_hidden) + self.similarity_bias)
 
-        return logits
+        return logits.view(-1, 1)
 
     def freeze_bert_encoder(self):
         for param in self.bert.parameters():

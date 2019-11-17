@@ -110,14 +110,6 @@ def main(args):
 
                 # Forward pass
                 logits = model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids)
-
-                print(logits.size())
-                print(logits.type())
-                print(labels.size())
-                print(labels.type())
-
-                exit()
-
                 loss = loss_fct(logits.view(-1, 1), labels.view(-1, 1))
                 train_loss_set.append(loss.item())
 
