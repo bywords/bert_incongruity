@@ -98,6 +98,8 @@ def main(args):
 
             # Train the data for one epoch
             for step, batch in enumerate(train_dataloader):
+                print(batch)
+
                 # Add batch to GPU
                 batch = tuple(t.to(device) for t in batch)
                 # Unpack the inputs from our dataloader
