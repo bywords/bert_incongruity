@@ -10,9 +10,9 @@ class BertPoolForIncongruity(nn.Module):
     the pooled output.
     """
 
-    def __init__(self, vocab_file, do_lower_case, hidden_size):
+    def __init__(self, vocab_file, hidden_size):
         super(BertPoolForIncongruity, self).__init__()
-        self.bert = BertModel.from_pretrained(vocab_file, do_lower_case=do_lower_case)
+        self.bert = BertModel.from_pretrained(vocab_file)
         self.similarity = nn.Parameter(torch.randn(hidden_size, hidden_size))
         self.similarity_bias = nn.Parameter(torch.randn(1))
 

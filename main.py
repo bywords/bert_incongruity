@@ -48,7 +48,7 @@ def main(args):
     epochs = 4
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
-    model = BertPoolForIncongruity('bert-base-uncased', do_lower_case=True, hidden_size=args.hidden_dim)
+    model = BertPoolForIncongruity('bert-base-uncased', hidden_size=args.hidden_dim)
     model.cuda()
 
     if args.freeze:
