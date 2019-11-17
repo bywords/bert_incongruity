@@ -55,7 +55,7 @@ def main(args):
     set_seed(args)
 
     # Number of training epochs (authors recommend between 2 and 4)
-    epochs = 4
+    epochs = args.max_epochs
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
     model = BertPoolForIncongruity('bert-base-uncased', hidden_size=args.hidden_dim)
@@ -98,19 +98,6 @@ def main(args):
 
             # Train the data for one epoch
             for step, batch in enumerate(train_dataloader):
-                print(type(batch[0]))
-                print(batch[0].size())
-                print(type(batch[1]))
-                print(batch[1].size())
-                print(type(batch[2]))
-                print(batch[2].size())
-                print(type(batch[3]))
-                print(batch[3].size())
-                print(type(batch[4]))
-                print(batch[4].size())
-                exit()
-
-
                 # Add batch to GPU
                 batch = tuple(t.to(device) for t in batch)
                 # Unpack the inputs from our dataloader
@@ -226,6 +213,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_warmup_steps", default=100, type=int, help="For AdamW Secheduler")
     parser.add_argument("--max_seq_len", default=512, type=int, help="For AdamW Secheduler")
     parser.add_argument("--batch_size", default=64, type=int, help="Batch size")
+    parser.add_argument("--max_epochs", default=2, type=int, help="Number of max epochs for training. btw 2 and 4 are recommended.")
     parser.add_argument("--hidden_dim", default=768, type=int, help="Hidden dims for headline and body text")
 
     args = parser.parse_args()
