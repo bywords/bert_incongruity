@@ -3,7 +3,7 @@
 ## Dependencies
 ```
 python==3.6
-torch==1.1.0
+torch==1.2.0
 ```
 
 If the ``Library not loaded'' error occurs in Mac OS, run the command below:

@@ -4,8 +4,9 @@ import numpy as np
 import enum
 import torch
 import pandas as pd
+from io import StringIO
 from keras.preprocessing.sequence import pad_sequences
-from torch.utils import data
+from torch.utils.data import Dataset, IterableDataset
 
 bert_input_template = "[CLS] {} [SEP]"
 
@@ -20,7 +21,7 @@ class DataType(enum.Enum):
    Test_3 = 7
 
 
-class IncongruityDataset(data.Dataset):
+class IncongruityDataset(Dataset):
     'Characterizes a dataset for PyTorch'
     def __init__(self, tokenizer, max_seq_len, data_type):
         'Initialization'
@@ -94,6 +95,65 @@ class IncongruityDataset(data.Dataset):
         target_label = self.label[index, :]
 
         return target_headline, target_bodytext, target_headline_mask, target_bodytext_mask, target_label
+
+
+class IncongruityIterableDataset(IterableDataset):
+    'Characterizes an Iterabledataset for PyTorch'
+    def __init__(self, tokenizer, max_seq_len, data_type):
+        'Initialization'
+        if data_type == DataType.Train:
+            path = os.path.join("data", "train.tsv")
+        elif data_type == DataType.Dev:
+            path = os.path.join("data", "dev.tsv")
+        elif data_type == DataType.Test:
+            path = os.path.join("data", "test.tsv")
+        elif data_type == DataType.Test_0:
+            path = os.path.join("data", "test_type_0.tsv")
+        elif data_type == DataType.Test_1:
+            path = os.path.join("data", "test_type_1.tsv")
+        elif data_type == DataType.Test_2:
+            path = os.path.join("data", "test_type_2.tsv")
+        elif data_type == DataType.Test_3:
+            path = os.path.join("data", "test_type_3.tsv")
+        else:
+            raise TypeError("data_type should be DataType class.")
+
+        self.path = path
+        self.tokenizer = tokenizer
+        self.max_seq_len = max_seq_len
+
+    def __iter__(self):
+
+        # Create an iterator
+        file_itr = open(self.path)
+
+        # Map each element using the line_mapper
+        mapped_itr = map(self.line_mapper, file_itr)
+
+        return mapped_itr
+
+    def line_mapper(self, line):
+
+        # Splits the line into text and label and applies preprocessing to the text
+        df = pd.read_csv(StringIO(line), sep="\t", header=None)
+        headline, bodytext, h_mask, b_mask, label = self.preprocess(df.iloc[0, 1], df.iloc[0, 2], df.iloc[0, 3])
+
+        return headline, bodytext, h_mask, b_mask, label
+
+    def preprocess(self, headline, bodytext, label):
+        headline = [self.tokenizer.convert_tokens_to_ids(x)
+                    for x in self.tokenizer.tokenize(bert_input_template.format(headline))]
+        bodytext = [self.tokenizer.convert_tokens_to_ids(x)
+                    for x in self.tokenizer.tokenize(bert_input_template.format(bodytext))]
+        headline_mask = [float(i > 0) for i in headline]
+        bodytext_mask = [float(i > 0) for i in bodytext]
+
+        headline = pad_sequences([headline], maxlen=self.max_seq_len,
+                                 dtype="long", truncating="post", padding="post")[0, :]
+        bodytext = pad_sequences([bodytext], maxlen=self.max_seq_len,
+                                 dtype="long", truncating="post", padding="post")[0, :]
+
+        return headline, bodytext, headline_mask, bodytext_mask, label
 
 
 # Function to calculate the accuracy of our predictions vs labels

@@ -11,7 +11,7 @@ from torch.utils import data
 from tqdm import trange
 from transformers import BertTokenizer, AdamW, WarmupLinearSchedule
 
-from data_utils import IncongruityDataset, DataType, flat_accuracy
+from data_utils import IncongruityIterableDataset, DataType, flat_accuracy
 from bert_pool import BertPoolForIncongruity
 
 
@@ -56,16 +56,16 @@ def main(args):
     else:
         model.unfreeze_bert_encoder()
 
-    test_set = IncongruityDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Dev)
+    test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Dev)
     test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size, shuffle=False)
 
     if args.mode == "train":
 
         # tokenizer, max_seq_len, filename
-        training_set = IncongruityDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Train)
+        training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Train)
         train_dataloader = data.DataLoader(training_set, batch_size=args.batch_size, shuffle=True)
 
-        dev_set = IncongruityDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Dev)
+        dev_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Dev)
         dev_dataloader = data.DataLoader(dev_set, batch_size=args.batch_size, shuffle=False)
 
         # Define optimizers
