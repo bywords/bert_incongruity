@@ -57,9 +57,8 @@ class IncongruityDataset(data.Dataset):
         headlines = pad_sequences(headlines, maxlen=max_seq_len, dtype="long", truncating="post", padding="post")
         bodytexts = pad_sequences(bodytexts, maxlen=max_seq_len, dtype="long", truncating="post", padding="post")
 
-        print(headlines.shape)
-        print(bodytexts.shape)
-        exit()
+        headlines = headlines[:, :max_seq_len]
+        bodytexts = bodytexts[:, :max_seq_len]
 
         # Create attention masks
         head_attention_masks, body_attention_masks = [], []
@@ -72,24 +71,29 @@ class IncongruityDataset(data.Dataset):
             seq_mask = [float(i > 0) for i in seq]
             body_attention_masks.append(seq_mask)
 
-        #self.headlines =
+        self.headline = headlines
+        self.bodytext = bodytexts
+        self.headline_mask = np.array(head_attention_masks)
+        self.bodytext_mask = np.array(body_attention_masks)
+        self.label = labels
 
-        self.df = pd.DataFrame({"headline": headlines, "bodytext": bodytexts,
-                                "headline_mask": head_attention_masks, "bodytext_mask": body_attention_masks,
-                                "label": labels})
+        self.num_samples = len(df.index)
 
     def __len__(self):
         'Denotes the total number of samples'
-        return len(self.df.index)
+        return self.num_samples
 
     def __getitem__(self, index):
         if torch.is_tensor(index):
             index = index.tolist()
-        target_df = self.df.iloc[index, :]
 
-        return target_df.headline.values, target_df.bodytext.values, \
-               target_df.headline_mask.values, target_df.headline_mask.values, \
-               target_df.label.values
+        target_headline = self.headline[index, :]
+        target_bodytext = self.bodytext[index, :]
+        target_headline_mask = self.headline_mask[index, :]
+        target_bodytext_mask = self.bodytext_mask[index, :]
+        target_label = self.label[index, :]
+
+        return target_headline, target_bodytext, target_headline_mask, target_bodytext_mask, target_label
 
 
 # Function to calculate the accuracy of our predictions vs labels
