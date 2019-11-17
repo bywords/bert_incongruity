@@ -153,6 +153,16 @@ class IncongruityIterableDataset(IterableDataset):
         bodytext = pad_sequences([bodytext], maxlen=self.max_seq_len,
                                  dtype="long", truncating="post", padding="post")[0, :]
 
+        print(headline.shape)
+        print(bodytext.shape)
+
+        print(headline_mask.shape)
+        print(bodytext_mask.shape)
+
+        print(np.array([label]).shape)
+
+        exit()
+
         return headline, bodytext, headline_mask, bodytext_mask, np.array([label])
 
 
