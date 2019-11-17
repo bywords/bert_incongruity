@@ -18,6 +18,12 @@ class BertPoolForIncongruity(nn.Module):
 
     def forward(self, headline_input_ids, bodytext_input_ids,
                 headline_token_type_ids, bodytext_token_type_ids):
+        print(type(headline_input_ids))
+        print(type(bodytext_input_ids))
+        print(headline_input_ids[0,:])
+        print(bodytext_input_ids[0, :])
+        exit()
+
         headline_outputs = self.bert(headline_input_ids, token_type_ids=headline_token_type_ids)[0]  # last hidden states
         bodytext_outputs = self.bert(bodytext_input_ids, token_type_ids=bodytext_token_type_ids)[0]  # last hidden states
 
