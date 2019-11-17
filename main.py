@@ -102,13 +102,21 @@ def main(args):
                 # Add batch to GPU
                 batch = tuple(t.to(device, dtype=torch.long) for t in batch)
                 # Unpack the inputs from our dataloader
-                b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids, b_labels = batch
+                b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids, labels = batch
                 # Clear out the gradients (by default they accumulate)
                 optimizer.zero_grad()
 
                 # Forward pass
                 logits = model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids)
-                loss = loss_fct(logits.view(-1, 1), b_labels.view(-1, 1))
+
+                print(logits.size())
+                print(logits.type())
+                print(labels.size())
+                print(labels.type())
+
+                exit()
+
+                loss = loss_fct(logits.view(-1, 1), labels.view(-1, 1))
                 train_loss_set.append(loss.item())
 
                 # Backward pass
