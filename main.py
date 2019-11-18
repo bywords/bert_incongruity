@@ -66,7 +66,7 @@ def main(args):
         model.unfreeze_bert_encoder()
 
     # cannot shuffle with iterable dataset
-    test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Dev)
+    test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.DE)
     test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
 
     if args.mode == "train":

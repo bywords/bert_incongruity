@@ -19,6 +19,9 @@ class DataType(enum.Enum):
    Test_1 = 5
    Test_2 = 6
    Test_3 = 7
+   Train_sample = 8
+   Dev_sample = 9
+   Test_sample = 10
 
 
 class IncongruityDataset(Dataset):
