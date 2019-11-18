@@ -127,7 +127,7 @@ def main(args):
                 nb_tr_examples += b_head_input_ids.size(0)
                 nb_tr_steps += 1
 
-            logger.info("Epoch {} - Train loss: {.4f}".format(e_idx, tr_loss / nb_tr_steps))
+            logger.info("Epoch {} - Train loss: {:.4f}".format(e_idx, tr_loss / nb_tr_steps))
 
             # Validation
 
@@ -146,7 +146,7 @@ def main(args):
                 # Telling the model not to compute or store gradients, saving memory and speeding up validation
                 with torch.no_grad():
                     # Forward pass, calculate logit predictions
-                    preds = nn.sigmoid(model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids))
+                    preds = nn.Sigmoid(model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids))
 
                 # Move logits and labels to CPU
                 preds = preds.detach().cpu().numpy()
@@ -182,7 +182,7 @@ def main(args):
         # Telling the model not to compute or store gradients, saving memory and speeding up validation
         with torch.no_grad():
             # Forward pass, calculate logit predictions
-            preds = nn.sigmoid(model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids))
+            preds = nn.Sigmoid(model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids))
 
         # Move logits and labels to CPU
         preds = preds.detach().cpu().numpy()
