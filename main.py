@@ -196,7 +196,7 @@ def main(args):
         y_targets.append(label_ids)
 
     y_preds = np.concatenate(y_preds).reshape((-1, ))
-    y_targets = np.concatenate(y_targets).reshape((-1, ))
+    y_targets = np.concatenate(y_targets).reshape((-1, )).astype(int)
 
     acc = accuracy_score(y_targets, y_preds)
     auroc = roc_auc_score(y_targets, y_preds)
