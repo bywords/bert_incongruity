@@ -115,6 +115,12 @@ class IncongruityIterableDataset(IterableDataset):
             path = os.path.join("data", "test_type_2.tsv")
         elif data_type == DataType.Test_3:
             path = os.path.join("data", "test_type_3.tsv")
+        elif data_type == DataType.Train_sample:
+            path = os.path.join("data", "train_sample.tsv")
+        elif data_type == DataType.Dev_sample:
+            path = os.path.join("data", "dev_sample.tsv")
+        elif data_type == DataType.Test_sample:
+            path = os.path.join("data", "test_sample.tsv")
         else:
             raise TypeError("data_type should be DataType class.")
 
