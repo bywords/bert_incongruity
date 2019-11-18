@@ -99,35 +99,36 @@ def main(args):
 
             # Train the data for one epoch
 
-            for step, batch in enumerate(train_dataloader):
-                if step % 10 == 0:
-                    logger.info("Epoch {} - Iteration {}".format(e_idx, step*args.batch_size))
-                # Add batch to GPU
-                batch = tuplify_with_device(batch, device)
-                # Unpack the inputs from our dataloader
-                b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids, labels = batch
-                # Clear out the gradients (by default they accumulate)
-                optimizer.zero_grad()
-
-                # Forward pass
-                logits = model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids)
-                loss = loss_fct(logits.view(-1, 1), labels.view(-1, 1))
-                train_loss_set.append(loss.item())
-
-                # Backward pass
-                loss.backward()
-
-                # Update parameters and take a step using the computed gradient
-                nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
-                optimizer.step()
-                scheduler.step()
-
-                # Update tracking variables
-                tr_loss += loss.item()
-                nb_tr_examples += b_head_input_ids.size(0)
-                nb_tr_steps += 1
-
-            logger.info("Epoch {} - Train loss: {:.4f}".format(e_idx, tr_loss / nb_tr_steps))
+            # commented out for debugging
+            # for step, batch in enumerate(train_dataloader):
+            #     if step % 10 == 0:
+            #         logger.info("Epoch {} - Iteration {}".format(e_idx, step*args.batch_size))
+            #     # Add batch to GPU
+            #     batch = tuplify_with_device(batch, device)
+            #     # Unpack the inputs from our dataloader
+            #     b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids, labels = batch
+            #     # Clear out the gradients (by default they accumulate)
+            #     optimizer.zero_grad()
+            #
+            #     # Forward pass
+            #     logits = model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids)
+            #     loss = loss_fct(logits.view(-1, 1), labels.view(-1, 1))
+            #     train_loss_set.append(loss.item())
+            #
+            #     # Backward pass
+            #     loss.backward()
+            #
+            #     # Update parameters and take a step using the computed gradient
+            #     nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+            #     optimizer.step()
+            #     scheduler.step()
+            #
+            #     # Update tracking variables
+            #     tr_loss += loss.item()
+            #     nb_tr_examples += b_head_input_ids.size(0)
+            #     nb_tr_steps += 1
+            #
+            # logger.info("Epoch {} - Train loss: {:.4f}".format(e_idx, tr_loss / nb_tr_steps))
 
             # Validation
 
@@ -157,6 +158,10 @@ def main(args):
 
             dev_y_preds = np.concatenate(dev_y_preds)
             dev_y_targets = np.concatenate(dev_y_targets)
+
+            print(dev_y_preds.shape)
+            print(dev_y_targets.shape)
+            exit()
 
             dev_acc = accuracy_score(dev_y_targets, dev_y_preds)
             dev_auroc = roc_auc_score(dev_y_targets, dev_y_preds)
