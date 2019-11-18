@@ -161,7 +161,7 @@ class IncongruityIterableDataset(IterableDataset):
         headline_mask = np.array([float(i > 0) for i in headline])
         bodytext_mask = np.array([float(i > 0) for i in bodytext])
 
-        return headline, bodytext, headline_mask, bodytext_mask, np.array([label])
+        return headline, bodytext, headline_mask, bodytext_mask, np.array([label], dtype=np.int32)
 
 
 # Function to calculate the accuracy of our predictions vs labels
