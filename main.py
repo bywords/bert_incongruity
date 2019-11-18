@@ -146,7 +146,7 @@ def main(args):
                 # Telling the model not to compute or store gradients, saving memory and speeding up validation
                 with torch.no_grad():
                     # Forward pass, calculate logit predictions
-                    preds = nn.Sigmoid(model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids))
+                    preds = torch.sigmoid(model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids))
 
                 # Move logits and labels to CPU
                 preds = preds.detach().cpu().numpy()
@@ -182,7 +182,7 @@ def main(args):
         # Telling the model not to compute or store gradients, saving memory and speeding up validation
         with torch.no_grad():
             # Forward pass, calculate logit predictions
-            preds = nn.Sigmoid(model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids))
+            preds = torch.sigmoid(model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids))
 
         # Move logits and labels to CPU
         preds = preds.detach().cpu().numpy()
