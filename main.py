@@ -157,12 +157,7 @@ def main(args):
             dev_y_preds = np.concatenate(dev_y_preds).reshape((-1, ))
             dev_y_targets = np.concatenate(dev_y_targets).reshape((-1, )).astype(int)
 
-            print(dev_y_preds.shape)
-            print(dev_y_targets.shape)
-            print(dev_y_preds[0:5])
-            print(dev_y_targets[0:5])
-
-            dev_acc = accuracy_score(dev_y_targets, dev_y_preds)
+            dev_acc = accuracy_score(dev_y_targets, dev_y_preds.round())
             dev_auroc = roc_auc_score(dev_y_targets, dev_y_preds)
 
             logger.info("Epoch {} - Dev Acc: {:.4f} AUROC: {:.4f}".format(e_idx, dev_acc, dev_auroc))
@@ -198,7 +193,7 @@ def main(args):
     y_preds = np.concatenate(y_preds).reshape((-1, ))
     y_targets = np.concatenate(y_targets).reshape((-1, )).astype(int)
 
-    acc = accuracy_score(y_targets, y_preds)
+    acc = accuracy_score(y_targets, y_preds.round())
     auroc = roc_auc_score(y_targets, y_preds)
     logger.info("Test Accuracy: {:.4f}, AUROC: {:.4f}".format(acc, auroc))
 
