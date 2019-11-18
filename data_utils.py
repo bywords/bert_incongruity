@@ -161,7 +161,7 @@ class IncongruityIterableDataset(IterableDataset):
         headline_mask = np.array([float(i > 0) for i in headline])
         bodytext_mask = np.array([float(i > 0) for i in bodytext])
 
-        return headline, bodytext, headline_mask, bodytext_mask, np.array([label], dtype=np.int32)
+        return headline, bodytext, headline_mask, bodytext_mask, np.array([label])
 
 
 # Function to calculate the accuracy of our predictions vs labels
@@ -174,4 +174,4 @@ def flat_accuracy(preds, labels):
 def tuplify_with_device(batch, device):
     return tuple([batch[0].to(device, dtype=torch.long), batch[1].to(device, dtype=torch.long),
                   batch[2].to(device, dtype=torch.long), batch[3].to(device, dtype=torch.long),
-                  batch[4].to(device, dtype=torch.long)])
+                  batch[4].to(device, dtype=torch.float)])

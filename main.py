@@ -155,7 +155,7 @@ def main(args):
                 dev_y_targets.append(label_ids)
 
             dev_y_preds = np.concatenate(dev_y_preds).reshape((-1, ))
-            dev_y_targets = np.concatenate(dev_y_targets).reshape((-1, ))
+            dev_y_targets = np.concatenate(dev_y_targets).reshape((-1, )).astype(int)
 
             print(dev_y_preds.shape)
             print(dev_y_targets.shape)
