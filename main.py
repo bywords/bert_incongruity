@@ -134,10 +134,10 @@ def main(args):
 
             # Put model in evaluation mode to evaluate loss on the validation set
             model.eval()
+            logger.info("Epoch {} - Start Validation".format(e_idx))
 
             # Tracking variables
             dev_y_preds, dev_y_targets = [], []
-
             # Evaluate data for one epoch
             for batch in dev_dataloader:
                 # Add batch to GPU
@@ -161,6 +161,8 @@ def main(args):
 
             print(dev_y_preds.shape)
             print(dev_y_targets.shape)
+            print(dev_y_preds[0:5])
+            print(dev_y_targets[0:5])
             exit()
 
             dev_acc = accuracy_score(dev_y_targets, dev_y_preds)
