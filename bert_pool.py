@@ -34,9 +34,9 @@ class BertPoolForIncongruity(nn.Module):
         temp2 = temp / headline_lens
         print(temp2.size())
 
-        print(temp[0][0:2])
+        print(temp[0,0:2])
         print(headline_lens[0])
-        print(temp2[0][0:2])
+        print(temp2[0,0:2])
         exit()
 
 
