@@ -169,9 +169,10 @@ class IncongruityIterableDataset(IterableDataset):
 
         # Splits the line into text and label and applies preprocessing to the text
         df = pd.read_csv(StringIO(line), sep="\t", header=None)
-        headline, bodytext, h_mask, b_mask, label = self.preprocess(df.iloc[0, 1], df.iloc[0, 2], df.iloc[0, 3])
+        headline, h_mask, h_pool_mask, h_len, bodytext, b_mask, b_pool_mask, b_len, label = \
+            self.preprocess(df.iloc[0, 1], df.iloc[0, 2], df.iloc[0, 3])
 
-        return headline, bodytext, h_mask, b_mask, label
+        return headline, h_mask, h_pool_mask, h_len, bodytext, b_mask, b_pool_mask, b_len, label
 
     def preprocess(self, headline, bodytext, label):
         headline = [self.tokenizer.convert_tokens_to_ids(x)
@@ -197,9 +198,11 @@ class IncongruityIterableDataset(IterableDataset):
         bodytext_mask = np.array(bodytext_mask); bodytext_pool_mask = np.array(bodytext_pool_mask)
         bodytext_len = bodytext_pool_mask.sum()
 
+        label = np.array([label])
+
         return headline, headline_mask, headline_pool_mask, headline_len, \
                bodytext, bodytext_mask, bodytext_pool_mask, bodytext_len, \
-               np.array([label])
+               label
 
 
 # Function to calculate the accuracy of our predictions vs labels
