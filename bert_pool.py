@@ -16,15 +16,25 @@ class BertPoolForIncongruity(nn.Module):
         self.similarity = nn.Parameter(torch.randn(hidden_size, hidden_size))
         self.similarity_bias = nn.Parameter(torch.randn(1))
 
-    def forward(self, headline_input_ids, bodytext_input_ids,
-                headline_token_type_ids, bodytext_token_type_ids):
+    def forward(self, headline_input_ids, headline_token_type_ids, headline_pool_masks, headline_lens,
+                bodytext_input_ids, bodytext_token_type_ids, bodytext_pool_masks, bodytext_lens):
         headline_outputs = self.bert(headline_input_ids, token_type_ids=headline_token_type_ids)[0]  # last hidden states
         bodytext_outputs = self.bert(bodytext_input_ids, token_type_ids=bodytext_token_type_ids)[0]  # last hidden states
 
-        print(headline_input_ids[0].size())
-        print(headline_outputs[0].size())
-        print(headline_token_type_ids[0].size())
+        print(headline_outputs.size())
+        print(headline_lens.size())
+
+        temp = torch.matmul(torch.transpose(headline_outputs, 1, 2), headline_pool_masks)
+        print(temp.size())
         exit()
+
+
+        # headline_outputs # (batch, seq, hidden_dim) --> (batch, hidden_dim, seq)
+        # headline_pool_masks # (batch, seq, 1) --> (batch, seq, 1)
+        #
+        # # (batch, hidden_dim, 1) -- > (batch, hidden_dim)
+        #
+        # headline_lens # (batch, 1)
 
         headline_mean_hidden = headline_outputs.mean(dim=1, keepdim=True)  # (batch, 1, hidden_dim)
         bodytext_mean_hidden = bodytext_outputs.mean(dim=1, keepdim=True)  # (batch, 1, hidden_dim)

@@ -104,13 +104,15 @@ def main(args):
                 # Add batch to GPU
                 batch = tuplify_with_device(batch, device)
                 # Unpack the inputs from our dataloader
-                b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids, labels = batch
+                b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens,\
+                b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens, b_labels = batch
                 # Clear out the gradients (by default they accumulate)
                 optimizer.zero_grad()
 
                 # Forward pass
-                logits = model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids)
-                loss = loss_fct(logits.view(-1, 1), labels.view(-1, 1))
+                b_logits = model(b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens,
+                                 b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens)
+                loss = loss_fct(b_logits.view(-1, 1), b_labels.view(-1, 1))
                 train_loss_set.append(loss.item())
 
                 # Backward pass
@@ -141,15 +143,17 @@ def main(args):
                 # Add batch to GPU
                 batch = tuplify_with_device(batch, device)
                 # Unpack the inputs from our dataloader
-                b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids, labels = batch
+                b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens, \
+                b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens, b_labels = batch
                 # Telling the model not to compute or store gradients, saving memory and speeding up validation
                 with torch.no_grad():
                     # Forward pass, calculate logit predictions
-                    preds = torch.sigmoid(model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids))
+                    preds = torch.sigmoid(model(b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens,
+                                                b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens))
 
                 # Move logits and labels to CPU
                 preds = preds.detach().cpu().numpy()
-                label_ids = labels.to('cpu').numpy()
+                label_ids = b_labels.to('cpu').numpy()
 
                 dev_y_preds.append(preds)
                 dev_y_targets.append(label_ids)
@@ -177,15 +181,17 @@ def main(args):
         # Add batch to GPU
         batch = tuplify_with_device(batch, device)
         # Unpack the inputs from our dataloader
-        b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids, labels = batch
+        b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens, \
+        b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens, b_labels = batch
         # Telling the model not to compute or store gradients, saving memory and speeding up validation
         with torch.no_grad():
             # Forward pass, calculate logit predictions
-            preds = torch.sigmoid(model(b_head_input_ids, b_body_input_ids, b_head_token_type_ids, b_body_token_type_ids))
+            preds = torch.sigmoid(model(b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens,
+                                        b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens))
 
         # Move logits and labels to CPU
         preds = preds.detach().cpu().numpy()
-        label_ids = labels.to('cpu').numpy()
+        label_ids = b_labels.to('cpu').numpy()
 
         y_preds.append(preds)
         y_targets.append(label_ids)

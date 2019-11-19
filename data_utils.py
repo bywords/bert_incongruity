@@ -4,6 +4,7 @@ import numpy as np
 import enum
 import torch
 import pandas as pd
+from copy import deepcopy
 from io import StringIO
 from keras.preprocessing.sequence import pad_sequences
 from torch.utils.data import Dataset, IterableDataset
@@ -42,6 +43,12 @@ class IncongruityDataset(Dataset):
             path = os.path.join("data", "test_type_2.tsv")
         elif data_type == DataType.Test_3:
             path = os.path.join("data", "test_type_3.tsv")
+        elif data_type == DataType.Train_sample:
+            path = os.path.join("data", "train_sample.tsv")
+        elif data_type == DataType.Dev_sample:
+            path = os.path.join("data", "dev_sample.tsv")
+        elif data_type == DataType.Test_sample:
+            path = os.path.join("data", "test_sample.tsv")
         else:
             raise TypeError("data_type should be DataType class.")
 
@@ -65,20 +72,34 @@ class IncongruityDataset(Dataset):
         bodytexts = bodytexts[:, :max_seq_len]
 
         # Create attention masks
-        head_attention_masks, body_attention_masks = [], []
+        head_attention_masks, body_attention_masks, head_pooling_masks, body_pooling_masks = [], [], [], []
         # Create a mask of 1s for each token followed by 0s for padding
         for seq in headlines:
             seq_mask = [float(i > 0) for i in seq]
+            pooling_mask = deepcopy(seq_mask)
+
+            pooling_mask[pooling_mask.index(float(False))-1] = float(False)
+            pooling_mask[0] = float(False)
+
             head_attention_masks.append(seq_mask)
+            head_pooling_masks.append(pooling_mask)
 
         for seq in bodytexts:
             seq_mask = [float(i > 0) for i in seq]
+            pooling_mask = deepcopy(seq_mask)
+
+            pooling_mask[pooling_mask.index(float(False)) - 1] = float(False)
+            pooling_mask[0] = float(False)
+
             body_attention_masks.append(seq_mask)
+            body_pooling_masks.append(pooling_mask)
 
         self.headline = headlines
         self.bodytext = bodytexts
         self.headline_mask = np.array(head_attention_masks)
         self.bodytext_mask = np.array(body_attention_masks)
+        self.headline_pool_mask = np.array(head_pooling_masks)
+        self.bodytext_pool_mask = np.array(body_pooling_masks)
         self.label = labels
 
         self.num_samples = len(df.index)
@@ -94,10 +115,13 @@ class IncongruityDataset(Dataset):
         target_headline = self.headline[index, :]
         target_bodytext = self.bodytext[index, :]
         target_headline_mask = self.headline_mask[index, :]
+        target_headline_pooling_mask = self.headline_pool_mask[index, :]
         target_bodytext_mask = self.bodytext_mask[index, :]
+        target_bodytext_pooling_mask = self.bodytext_pool_mask[index, :]
         target_label = self.label[index, :]
 
-        return target_headline, target_bodytext, target_headline_mask, target_bodytext_mask, target_label
+        return target_headline, target_bodytext, target_headline_mask, target_headline_pooling_mask,\
+               target_bodytext_mask, target_bodytext_pooling_mask, target_label
 
 
 class IncongruityIterableDataset(IterableDataset):
@@ -158,10 +182,24 @@ class IncongruityIterableDataset(IterableDataset):
                                  dtype="long", truncating="post", padding="post")[0, :]
         bodytext = pad_sequences([bodytext], maxlen=self.max_seq_len,
                                  dtype="long", truncating="post", padding="post")[0, :]
-        headline_mask = np.array([float(i > 0) for i in headline])
-        bodytext_mask = np.array([float(i > 0) for i in bodytext])
 
-        return headline, bodytext, headline_mask, bodytext_mask, np.array([label])
+        headline_mask = [float(i > 0) for i in headline]
+        headline_pool_mask = deepcopy(headline_mask)
+        headline_pool_mask[headline_pool_mask.index(float(False)) - 1] = float(False)
+        headline_pool_mask[0] = float(False)
+        headline_mask = np.array(headline_mask); headline_pool_mask = np.array(headline_pool_mask)
+        headline_len = headline_pool_mask.sum()
+
+        bodytext_mask = [float(i > 0) for i in headline]
+        bodytext_pool_mask = deepcopy(bodytext_mask)
+        bodytext_pool_mask[bodytext_pool_mask.index(float(False)) - 1] = float(False)
+        bodytext_pool_mask[0] = float(False)
+        bodytext_mask = np.array(bodytext_mask); bodytext_pool_mask = np.array(bodytext_pool_mask)
+        bodytext_len = bodytext_pool_mask.sum()
+
+        return headline, headline_mask, headline_pool_mask, headline_len, \
+               bodytext, bodytext_mask, bodytext_pool_mask, bodytext_len, \
+               np.array([label])
 
 
 # Function to calculate the accuracy of our predictions vs labels
@@ -174,4 +212,5 @@ def flat_accuracy(preds, labels):
 def tuplify_with_device(batch, device):
     return tuple([batch[0].to(device, dtype=torch.long), batch[1].to(device, dtype=torch.long),
                   batch[2].to(device, dtype=torch.long), batch[3].to(device, dtype=torch.long),
-                  batch[4].to(device, dtype=torch.float)])
+                  batch[4].to(device, dtype=torch.long), batch[5].to(device, dtype=torch.long),
+                  batch[6].to(device, dtype=torch.float)])
