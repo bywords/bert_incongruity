@@ -21,9 +21,9 @@ class BertPoolForIncongruity(nn.Module):
         headline_outputs = self.bert(headline_input_ids, token_type_ids=headline_token_type_ids)[0]  # last hidden states
         bodytext_outputs = self.bert(bodytext_input_ids, token_type_ids=bodytext_token_type_ids)[0]  # last hidden states
 
-        print(headline_input_ids[0])
-        print(headline_outputs[0])
-        print(headline_token_type_ids[0])
+        print(headline_input_ids[0].size())
+        print(headline_outputs[0].size())
+        print(headline_token_type_ids[0].size())
         exit()
 
         headline_mean_hidden = headline_outputs.mean(dim=1, keepdim=True)  # (batch, 1, hidden_dim)
