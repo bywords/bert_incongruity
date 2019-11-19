@@ -40,7 +40,7 @@ class BertPoolForIncongruity(nn.Module):
 
 
 
-        print(temp[0])
+        print(temp[0, 0:2])
         print(headline_lens[0])
         print(temp3[0,0:2])
         exit()
