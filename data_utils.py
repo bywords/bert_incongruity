@@ -214,7 +214,7 @@ def flat_accuracy(preds, labels):
 
 def tuplify_with_device(batch, device):
     return tuple([batch[0].to(device, dtype=torch.long), batch[1].to(device, dtype=torch.long),
-                  batch[2].to(device, dtype=torch.long), batch[3].to(device, dtype=torch.long),
+                  batch[2].to(device, dtype=torch.float), batch[3].to(device, dtype=torch.long),
                   batch[4].to(device, dtype=torch.long), batch[5].to(device, dtype=torch.long),
-                  batch[6].to(device, dtype=torch.long), batch[7].to(device, dtype=torch.long),
+                  batch[6].to(device, dtype=torch.float), batch[7].to(device, dtype=torch.long),
                   batch[8].to(device, dtype=torch.float)])
