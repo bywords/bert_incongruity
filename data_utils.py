@@ -188,17 +188,19 @@ class IncongruityIterableDataset(IterableDataset):
         headline_pool_mask = deepcopy(headline_mask)
         headline_pool_mask[headline_pool_mask.index(float(False)) - 1] = float(False)
         headline_pool_mask[0] = float(False)
-        headline_mask = np.array(headline_mask); headline_pool_mask = np.array(headline_pool_mask)
-        headline_len = headline_pool_mask.sum()
+        headline_mask = np.array(headline_mask).reshape(-1, 1)
+        headline_pool_mask = np.array(headline_pool_mask).reshape(-1, 1)
+        headline_len = np.array(headline_pool_mask.sum()).reshape(-1, 1)
 
         bodytext_mask = [float(i > 0) for i in headline]
         bodytext_pool_mask = deepcopy(bodytext_mask)
         bodytext_pool_mask[bodytext_pool_mask.index(float(False)) - 1] = float(False)
         bodytext_pool_mask[0] = float(False)
-        bodytext_mask = np.array(bodytext_mask); bodytext_pool_mask = np.array(bodytext_pool_mask)
-        bodytext_len = bodytext_pool_mask.sum()
+        bodytext_mask = np.array(bodytext_mask).reshape(-1, 1)
+        bodytext_pool_mask = np.array(bodytext_pool_mask).reshape(-1, 1)
+        bodytext_len = np.array(bodytext_pool_mask.sum()).reshape(-1, 1)
 
-        label = np.array([label])
+        label = np.array(label).reshape(-1, 1)
 
         return headline, headline_mask, headline_pool_mask, headline_len, \
                bodytext, bodytext_mask, bodytext_pool_mask, bodytext_len, \
