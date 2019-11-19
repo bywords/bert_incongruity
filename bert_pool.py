@@ -31,8 +31,8 @@ class BertPoolForIncongruity(nn.Module):
 
         temp = torch.matmul(torch.transpose(headline_outputs, 1, 2), headline_pool_masks.unsqueeze(2))
         print(temp.size())
-        temp2 = temp.squeeze() / headline_lens
-        print(temp2.size9)
+        temp2 = temp / headline_lens
+        print(temp2.size())
 
         print(temp[0][0:10])
         print(headline_lens[0])
