@@ -40,21 +40,30 @@ class BertPoolForIncongruity(nn.Module):
         print(temp3[0,0:2])
         exit()
 
+        headline_mean_hidden = \
+            torch.div(torch.matmul(torch.transpose(headline_outputs, 1, 2), headline_pool_masks), headline_lens)
+        bodytext_mean_hidden = \
+            torch.div(torch.matmul(torch.transpose(bodytext_outputs, 1, 2), bodytext_pool_masks), bodytext_lens)
 
-        # headline_outputs # (batch, seq, hidden_dim) --> (batch, hidden_dim, seq)
-        # headline_pool_masks # (batch, seq, 1) --> (batch, seq, 1)
-        #
-        # # (batch, hidden_dim, 1) -- > (batch, hidden_dim)
-        #
-        # headline_lens # (batch, 1)
-
-        headline_mean_hidden = headline_outputs.mean(dim=1, keepdim=True)  # (batch, 1, hidden_dim)
-        bodytext_mean_hidden = bodytext_outputs.mean(dim=1, keepdim=True)  # (batch, 1, hidden_dim)
-        bodytext_mean_hidden = torch.transpose(bodytext_mean_hidden, 1, 2)    # (batch, hidden_dim, 1)
-
+        headline_mean_hidden = headline_mean_hidden.transpose(1, 2)
         # (batch, 1)
         logits = torch.matmul(torch.matmul(headline_mean_hidden, self.similarity),
                               bodytext_mean_hidden) + self.similarity_bias
+        #
+        # # headline_outputs # (batch, seq, hidden_dim) --> (batch, hidden_dim, seq)
+        # # headline_pool_masks # (batch, seq, 1) --> (batch, seq, 1)
+        # #
+        # # # (batch, hidden_dim, 1) -- > (batch, hidden_dim)
+        # #
+        # # headline_lens # (batch, 1)
+        #
+        # headline_mean_hidden = headline_outputs.mean(dim=1, keepdim=True)  # (batch, 1, hidden_dim)
+        # bodytext_mean_hidden = bodytext_outputs.mean(dim=1, keepdim=True)  # (batch, 1, hidden_dim)
+        # bodytext_mean_hidden = torch.transpose(bodytext_mean_hidden, 1, 2)    # (batch, hidden_dim, 1)
+        #
+        # # (batch, 1)
+        # logits = torch.matmul(torch.matmul(headline_mean_hidden, self.similarity),
+        #                       bodytext_mean_hidden) + self.similarity_bias
 
         return logits.view(-1, 1)
 
