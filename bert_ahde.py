@@ -60,46 +60,30 @@ class AttentionHDE(nn.Module):
         #  - GRU inputs: input [seq_len, batch, input_size], h_0 [num_layers * num_directions, batch, hidden_size]
         #  - GRU outputs: output [seq_len, batch, num_directions * hidden_size], h_n [num_layers * num_directions, batch, hidden_size]
 
-        print(headline_input_ids.size())
-        print(headline_token_type_ids.size())
         headline_outputs = self.bert(headline_input_ids, token_type_ids=headline_token_type_ids)[0]
-        print(headline_outputs.size())
-        print(headline_pool_masks.size())
-        print(headline_lens.size())
         headline_mean_hidden = \
             torch.div(torch.matmul(torch.transpose(headline_outputs, 1, 2), headline_pool_masks), headline_lens)
         x_headline = headline_mean_hidden.transpose(1, 2)  # (batch,
-        print(x_headline.size())
         x_headline = self.head_transform(x_headline)
-        print(x_headline.size())
 
         # achieve the hidden vector for every paragraph of body text
-        print(bodytext_input_ids.size())
-        print(bodytext_token_type_ids.size())
-
-        bodytext_input_ids = bodytext_input_ids.view(-1, self.embedding_dim)
-        bodytext_input_ids_chunks = torch.chunk(bodytext_input_ids, chunks=self.max_para_num, dim=0)
-
-        bodytext_token_type_ids = bodytext_token_type_ids.view(-1, self.embedding_dim)
-        bodytext_token_type_ids_chunks = torch.chunk(bodytext_token_type_ids, chunks=self.max_para_num, dim=0)
-
+        bodytext_input_ids_chunks = torch.chunk(bodytext_input_ids, chunks=self.max_para_num, dim=1)
+        bodytext_token_type_ids_chunks = torch.chunk(bodytext_token_type_ids, chunks=self.max_para_num, dim=1)
         bodytext_pool_masks_chunks = torch.chunk(bodytext_pool_masks, chunks=self.max_para_num, dim=1)
+        bodytext_lens_chunks = torch.chunk(bodytext_lens, chunks=self.max_para_num, dim=1)
 
-        print(bodytext_input_ids.size())
-        print(bodytext_token_type_ids.size())
-        print(bodytext_pool_masks.size())
-        print(bodytext_lens.size())
-        exit()
-
-        bodytext_output_chunks = []
+        x_bodytext_chunks = []
         for bodytext_input_id, bodytext_token_type_id, bodytext_pool_mask, bodytext_len in \
                 zip(bodytext_input_ids_chunks, bodytext_token_type_ids_chunks, bodytext_pool_masks_chunks, bodytext_lens_chunks):
             bodytext_outputs = self.bert(bodytext_input_id, token_type_ids=bodytext_token_type_id)[0]
-            headline_mean_hidden = \
+            bodytext_mean_hidden = \
                 torch.div(torch.matmul(torch.transpose(bodytext_outputs, 1, 2), bodytext_pool_mask), bodytext_len)
+            x_bodytext = bodytext_mean_hidden.transpose(1, 2)
+            x_bodytext_chunks.append(x_bodytext)
 
-            bodytext_output_chunks.append(bodytext_outputs)
-        bodytext_outputs = torch.cat(bodytext_output_chunks, dim=1)
+        x_bodytext = torch.cat(x_bodytext_chunks, dim=1)
+        print(x_bodytext.shape)
+        exit()
 
 
 
