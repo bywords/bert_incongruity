@@ -83,7 +83,9 @@ class AttentionHDE(nn.Module):
         print(bodytext_lens.size())
 
         para_lengths = bodytext_lens.squeeze()
+        print(para_lengths)
         valid_para_lengths = (para_lengths != 0).sum(dim=1).tolist()
+        print(valid_para_lengths)
         para_mask = (para_lengths == 0)
 
         # unmerge dimensions N and P
