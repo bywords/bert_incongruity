@@ -91,6 +91,8 @@ class AttentionHDE(nn.Module):
         # unmerge dimensions N and P
         output_body_packed, _ = self.body_encoder(pack_padded_sequence(h_paragraphs,
                                                                        valid_para_lengths, enforce_sorted=False))
+        print(output_body_packed.size())
+        exit()
         output_body, _ = pad_packed_sequence(output_body_packed, 
                                              batch_first=True, total_length=para_mask.shape[-1])  # [N, P, 2 * H]
 
