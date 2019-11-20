@@ -126,7 +126,7 @@ def main(args):
             # Train the data for one epoch
             for step, batch in enumerate(train_dataloader):
                 if step % 10 == 0:
-                    logger.info("Epoch {} - Iteration {}".format(e_idx, step*args.batch_size))
+                    logger.debug("Epoch {} - Iteration {}".format(e_idx, step*args.batch_size))
                 # Add batch to GPU
                 batch = tuplify_with_device(batch, device)
                 # Unpack the inputs from our dataloader
@@ -161,7 +161,7 @@ def main(args):
 
             # Put model in evaluation mode to evaluate loss on the validation set
             model.eval()
-            logger.info("Epoch {} - Start Validation".format(e_idx))
+            logger.debug("Epoch {} - Start Validation".format(e_idx))
 
             # Tracking variables
             dev_y_preds, dev_y_targets = [], []
