@@ -82,19 +82,25 @@ class AttentionHDE(nn.Module):
         bodytext_token_type_ids = bodytext_token_type_ids.view(-1, self.embedding_dim)
         bodytext_token_type_ids_chunks = torch.chunk(bodytext_token_type_ids, chunks=self.max_para_num, dim=0)
 
+        bodytext_pool_masks_chunks = torch.chunk(bodytext_pool_masks, chunks=self.max_para_num, dim=1)
+
         print(bodytext_input_ids.size())
         print(bodytext_token_type_ids.size())
         print(bodytext_pool_masks.size())
+        print(bodytext_lens.size())
         exit()
 
         bodytext_output_chunks = []
-        for bodytext_input_id, bodytext_token_type_id in zip(bodytext_input_ids_chunks, bodytext_token_type_ids_chunks):
+        for bodytext_input_id, bodytext_token_type_id, bodytext_pool_mask, bodytext_len in \
+                zip(bodytext_input_ids_chunks, bodytext_token_type_ids_chunks, bodytext_pool_masks_chunks, bodytext_lens_chunks):
             bodytext_outputs = self.bert(bodytext_input_id, token_type_ids=bodytext_token_type_id)[0]
+            headline_mean_hidden = \
+                torch.div(torch.matmul(torch.transpose(bodytext_outputs, 1, 2), bodytext_pool_mask), bodytext_len)
+
             bodytext_output_chunks.append(bodytext_outputs)
         bodytext_outputs = torch.cat(bodytext_output_chunks, dim=1)
 
-        headline_mean_hidden = \
-            torch.div(torch.matmul(torch.transpose(headline_outputs, 1, 2), headline_pool_masks), headline_lens)
+
 
 
 
