@@ -66,8 +66,6 @@ class AttentionHDE(nn.Module):
         x_headline = headline_mean_hidden.transpose(1, 2)  # (batch,
         x_headline = self.head_transform(x_headline)
 
-        print(x_headline.shape)
-
         # achieve the hidden vector for every paragraph of body text
         bodytext_input_ids_chunks = torch.chunk(bodytext_input_ids, chunks=self.max_para_num, dim=1)
         bodytext_token_type_ids_chunks = torch.chunk(bodytext_token_type_ids, chunks=self.max_para_num, dim=1)
@@ -90,19 +88,22 @@ class AttentionHDE(nn.Module):
 
             x_bodytext_chunks.append(x_bodytext.unsqueeze(dim=1))
 
-        x_bodytext = torch.cat(x_bodytext_chunks, dim=1)
-        print(x_bodytext.shape)
+        x_bodytext = torch.cat(x_bodytext_chunks, dim=1).squeeze()
+
+
+        print(x_headline.size())
+        print(x_bodytext.size())
+        print(bodytext_lens.size())
         exit()
 
 
 
+        # batch, para, hidden
 
+        # para_lengths = [N, P]
+        #
 
         x_body = self.word_embeds(bodys)  # [N, P, L_para, H_embed]
-
-        _, h_headline = self.headline_encoder(pack_padded_sequence(x_headline, headline_lengths,
-                                                                   batch_first=True, enforce_sorted=False))  # _, [1, N, H_enc]
-        h_headline = h_headline.squeeze()  # [N, H_enc]
 
         valid_para_lengths = (para_lengths != 0).sum(dim=1).tolist()
         para_mask = (para_lengths == 0)
