@@ -67,7 +67,7 @@ def main(args):
             'word': args.word_level_rnn_hidden_dim,
             'paragraph': args.word_level_rnn_hidden_dim
         }
-        model = AttentionHDE(args.bert_type, hidden_dims)
+        model = AttentionHDE(args.bert_type, hidden_dims, args.max_paragraph_num)
     else:
         raise ValueError("args.model should be set appropriately.")
     model.cuda()

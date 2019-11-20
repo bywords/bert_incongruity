@@ -27,7 +27,7 @@ class ParaHeadlineAttention(nn.Module):
 
 
 class AttentionHDE(nn.Module):
-    def __init__(self, bert_model, hidden_dims, max_para_len):
+    def __init__(self, bert_model, hidden_dims, max_para_num):
         super(AttentionHDE, self).__init__()
 
         self.bert = BertModel.from_pretrained(bert_model)
@@ -41,7 +41,7 @@ class AttentionHDE(nn.Module):
                                                2 * hidden_dims['paragraph'])
         self.bilinear = nn.Bilinear(hidden_dims['headline'], 2 * hidden_dims['paragraph'], 1)
 
-        self.max_para_len = max_para_len
+        self.max_para_num = max_para_num
 
     #def forward(self, headlines, headline_lengths, bodys, para_lengths):
     def forward(self, headline_input_ids, headline_token_type_ids, headline_pool_masks, headline_lens,
@@ -77,10 +77,10 @@ class AttentionHDE(nn.Module):
         print(bodytext_token_type_ids.size())
 
         bodytext_input_ids = bodytext_input_ids.view(-1, self.embedding_dim)
-        bodytext_input_ids_chunks = torch.chunk(bodytext_input_ids, chunks=self.max_para_len, dim=0)
+        bodytext_input_ids_chunks = torch.chunk(bodytext_input_ids, chunks=self.max_para_num, dim=0)
 
         bodytext_token_type_ids = bodytext_token_type_ids.view(-1, self.embedding_dim)
-        bodytext_token_type_ids_chunks = torch.chunk(bodytext_token_type_ids, chunks=self.max_para_len, dim=0)
+        bodytext_token_type_ids_chunks = torch.chunk(bodytext_token_type_ids, chunks=self.max_para_num, dim=0)
 
         print(bodytext_input_ids.size())
         print(bodytext_token_type_ids.size())
