@@ -268,6 +268,12 @@ class ParagraphIncongruityIterableDataset(IterableDataset):
 
         label = np.array(label).reshape(-1, 1)
 
+        print(paragraphs.shape)
+        print(paragraphs_mask.shape)
+        print(paragraphs_pool_mask.shape)
+        print(paragraphs_len.shape)
+        exit()
+
         return headline, headline_mask, headline_pool_mask, headline_len, \
                paragraphs, paragraphs_mask, paragraphs_pool_mask, paragraphs_len, \
                num_paragraphs, label
@@ -306,11 +312,5 @@ def pad_and_mask_for_bert_emb(text, tokenizer, max_seq_len):
     pool_mask = np.array(pool_mask).reshape(-1, 1)
     text_len = np.array(pool_mask.sum()).reshape(-1, 1)
     mask = np.array(mask)
-
-    print(text.shape)
-    print(mask.shape)
-    print(pool_mask.shape)
-    print(text_len.shape)
-    exit()
 
     return text, mask, pool_mask, text_len
