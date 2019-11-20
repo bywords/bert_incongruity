@@ -297,6 +297,8 @@ class ParagraphIncongruityIterableDataset(IterableDataset):
         print(paragraphs_pool_mask.shape)
         print(paragraphs_len.shape)
 
+        exit()
+
         label = np.array(label).reshape(-1, 1)
 
         return headline, headline_mask, headline_pool_mask, headline_len, \

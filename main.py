@@ -88,10 +88,10 @@ def main(args):
     elif args.model =="ahde":
         test_set = \
             ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                data_type=DataType.Test)
+                                                data_type=DataType.Test, max_para_num=args.max_paragraph_num)
         dev_set = ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Dev)
         training_set = ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                           data_type=DataType.Train)
+                                                           data_type=DataType.Train, max_para_num=args.max_paragraph_num)
     else:
         raise ValueError("args.model should be set properly.")
 
@@ -261,7 +261,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_seq_len", default=512, type=int, help="For AdamW Secheduler")
     parser.add_argument("--batch_size", default=64, type=int, help="Batch size")
     parser.add_argument("--max_epochs", default=4, type=int, help="Number of max epochs for training. btw 2 and 4 are recommended.")
-    parser.add_argument("--max_paragraphs", default=30, type=int)
+    parser.add_argument("--max_paragraph_num", default=30, type=int)
     parser.add_argument("--headline-rnn-hidden-dim", default=384, type=int)
     parser.add_argument("--word-level-rnn-hidden-dim", default=384, type=int)
     parser.add_argument("--paragraph-level-rnn-hidden-dim", default=384, type=int)
