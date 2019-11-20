@@ -72,25 +72,21 @@ class AttentionHDE(nn.Module):
         bodytext_pool_masks_chunks = torch.chunk(bodytext_pool_masks, chunks=self.max_para_num, dim=1)
         bodytext_lens_chunks = torch.chunk(bodytext_lens, chunks=self.max_para_num, dim=1)
 
-        print(bodytext_input_ids.size())
-        print(bodytext_token_type_ids.size())
-        print(bodytext_pool_masks.size())
-        print(bodytext_lens.size())
-
         x_bodytext_chunks = []
         for bodytext_input_id, bodytext_token_type_id, bodytext_pool_mask, bodytext_len in \
                 zip(bodytext_input_ids_chunks, bodytext_token_type_ids_chunks, bodytext_pool_masks_chunks, bodytext_lens_chunks):
 
-            print(bodytext_input_id.size())
-            print(bodytext_token_type_id.size())
-            print(bodytext_pool_mask.size())
-            print(bodytext_len.size())
+            bodytext_input_id = bodytext_input_id.squeeze(dim=1)
+            bodytext_token_type_id = bodytext_token_type_id.squeeze(dim=1)
+            bodytext_pool_mask = bodytext_pool_mask.squeeze(dim=1)
+            bodytext_len = bodytext_len.squeeze(dim=1)
 
             bodytext_outputs = self.bert(bodytext_input_id, token_type_ids=bodytext_token_type_id)[0]
             bodytext_mean_hidden = \
                 torch.div(torch.matmul(torch.transpose(bodytext_outputs, 1, 2), bodytext_pool_mask), bodytext_len)
             x_bodytext = bodytext_mean_hidden.transpose(1, 2)
-            x_bodytext_chunks.append(x_bodytext)
+
+            x_bodytext_chunks.append(x_bodytext.unsqueeze(dim=1))
 
         x_bodytext = torch.cat(x_bodytext_chunks, dim=1)
         print(x_bodytext.shape)
