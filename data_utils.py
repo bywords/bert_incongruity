@@ -175,36 +175,15 @@ class IncongruityIterableDataset(IterableDataset):
         return headline, h_mask, h_pool_mask, h_len, bodytext, b_mask, b_pool_mask, b_len, label
 
     def preprocess(self, headline, bodytext, label):
-        headline = [self.tokenizer.convert_tokens_to_ids(x)
-                    for x in self.tokenizer.tokenize(bert_input_template.format(headline))]
+
+        headline, headline_mask, headline_pool_mask, headline_len = pad_and_mask_for_bert_emb(headline,
+                                                                                              self.tokenizer,
+                                                                                              self.max_seq_len)
+
         bodytext_parsed_str = " ".join(list(filter(lambda x: x not in ["<EOS>", "<EOP>"], bodytext.split())))
-
-        print(bodytext)
-        print(bodytext_parsed_str)
-        exit()
-
-        bodytext = [self.tokenizer.convert_tokens_to_ids(x)
-                    for x in self.tokenizer.tokenize(bert_input_template.format(bodytext_parsed_str))]
-        headline = pad_sequences([headline], maxlen=self.max_seq_len,
-                                 dtype="long", truncating="post", padding="post")[0, :]
-        bodytext = pad_sequences([bodytext], maxlen=self.max_seq_len,
-                                 dtype="long", truncating="post", padding="post")[0, :]
-
-        headline_mask = [float(i > 0) for i in headline]
-        headline_pool_mask = deepcopy(headline_mask)
-        headline_pool_mask[headline_pool_mask.index(float(False)) - 1] = float(False)
-        headline_pool_mask[0] = float(False)
-        headline_mask = np.array(headline_mask)
-        headline_pool_mask = np.array(headline_pool_mask).reshape(-1, 1)
-        headline_len = np.array(headline_pool_mask.sum()).reshape(-1, 1)
-
-        bodytext_mask = [float(i > 0) for i in headline]
-        bodytext_pool_mask = deepcopy(bodytext_mask)
-        bodytext_pool_mask[bodytext_pool_mask.index(float(False)) - 1] = float(False)
-        bodytext_pool_mask[0] = float(False)
-        bodytext_mask = np.array(bodytext_mask)
-        bodytext_pool_mask = np.array(bodytext_pool_mask).reshape(-1, 1)
-        bodytext_len = np.array(bodytext_pool_mask.sum()).reshape(-1, 1)
+        bodytext, bodytext_mask, bodytext_pool_mask, bodytext_len = pad_and_mask_for_bert_emb(bodytext_parsed_str,
+                                                                                              self.tokenizer,
+                                                                                              self.max_seq_len)
 
         label = np.array(label).reshape(-1, 1)
 
@@ -255,52 +234,43 @@ class ParagraphIncongruityIterableDataset(IterableDataset):
         return mapped_itr
 
     def line_mapper(self, line):
-
         # Splits the line into text and label and applies preprocessing to the text
         df = pd.read_csv(StringIO(line), sep="\t", header=None)
-        headline, h_mask, h_pool_mask, h_len, bodytext, b_mask, b_pool_mask, b_len, label = \
+        headline, h_mask, h_pool_mask, h_len, paragraphs, p_mask, p_pool_mask, p_len, num_p, label = \
             self.preprocess(df.iloc[0, 1], df.iloc[0, 2], df.iloc[0, 3])
 
-        return headline, h_mask, h_pool_mask, h_len, bodytext, b_mask, b_pool_mask, b_len, label
+        return headline, h_mask, h_pool_mask, h_len, paragraphs, p_mask, p_pool_mask, p_len, label
 
     def preprocess(self, headline, bodytext, label):
-        headline = [self.tokenizer.convert_tokens_to_ids(x)
-                    for x in self.tokenizer.tokenize(bert_input_template.format(headline))]
-        bodytext = [self.tokenizer.convert_tokens_to_ids(x)
-                    for x in self.tokenizer.tokenize(bert_input_template.format(bodytext))]
-        headline = pad_sequences([headline], maxlen=self.max_seq_len,
-                                 dtype="long", truncating="post", padding="post")[0, :]
-        bodytext = pad_sequences([bodytext], maxlen=self.max_seq_len,
-                                 dtype="long", truncating="post", padding="post")[0, :]
+        headline, headline_mask, headline_pool_mask, headline_len = pad_and_mask_for_bert_emb(headline,
+                                                                                              self.tokenizer,
+                                                                                              self.max_seq_len)
 
-        headline_mask = [float(i > 0) for i in headline]
-        headline_pool_mask = deepcopy(headline_mask)
-        headline_pool_mask[headline_pool_mask.index(float(False)) - 1] = float(False)
-        headline_pool_mask[0] = float(False)
-        headline_mask = np.array(headline_mask)
-        headline_pool_mask = np.array(headline_pool_mask).reshape(-1, 1)
-        headline_len = np.array(headline_pool_mask.sum()).reshape(-1, 1)
+        bodytext_parsed_str = " ".join(list(filter(lambda x: x not in ["<EOS>"], bodytext.split())))
+        paragraphs, paragraphs_mask, paragraphs_pool_mask, paragraphs_len = [], [], [], []
 
-        bodytext_mask = [float(i > 0) for i in headline]
-        bodytext_pool_mask = deepcopy(bodytext_mask)
-        bodytext_pool_mask[bodytext_pool_mask.index(float(False)) - 1] = float(False)
-        bodytext_pool_mask[0] = float(False)
-        bodytext_mask = np.array(bodytext_mask)
-        bodytext_pool_mask = np.array(bodytext_pool_mask).reshape(-1, 1)
-        bodytext_len = np.array(bodytext_pool_mask.sum()).reshape(-1, 1)
+        for paragraph in bodytext_parsed_str.split("<EOP>"):
+            # split body texts into multiple paragraphs
+            text, mask, pool_mask, text_len = \
+                pad_and_mask_for_bert_emb(paragraph.strip(), self.tokenizer, self.max_seq_len)
+
+            paragraphs.append(text)
+            paragraphs_mask.append(mask)
+            paragraphs_pool_mask.append(pool_mask)
+            paragraphs_len.append(text_len)
+
+        num_paragraphs = np.array(len(paragraphs_len))
+
+        paragraphs = np.array(paragraphs)
+        paragraphs_mask = np.array(paragraphs_mask)
+        paragraphs_pool_mask = np.array(paragraphs_pool_mask)
+        paragraphs_len = np.array(paragraphs_len)
 
         label = np.array(label).reshape(-1, 1)
 
         return headline, headline_mask, headline_pool_mask, headline_len, \
-               bodytext, bodytext_mask, bodytext_pool_mask, bodytext_len, \
-               label
-
-
-# Function to calculate the accuracy of our predictions vs labels
-def flat_accuracy(preds, labels):
-    pred_flat = np.argmax(preds, axis=1).flatten()
-    labels_flat = labels.flatten()
-    return np.sum(pred_flat == labels_flat) / len(labels_flat)
+               paragraphs, paragraphs_mask, paragraphs_pool_mask, paragraphs_len, \
+               num_paragraphs, label
 
 
 def tuplify_with_device(batch, device):
@@ -308,7 +278,7 @@ def tuplify_with_device(batch, device):
                   batch[2].to(device, dtype=torch.float), batch[3].to(device, dtype=torch.float),
                   batch[4].to(device, dtype=torch.long), batch[5].to(device, dtype=torch.long),
                   batch[6].to(device, dtype=torch.float), batch[7].to(device, dtype=torch.float),
-                  batch[8].to(device, dtype=torch.float)])
+                  batch[7].to(device, dtype=torch.long), batch[8].to(device, dtype=torch.float)])
 
 
 def bert_dim(bert_model):
@@ -318,3 +288,18 @@ def bert_dim(bert_model):
         raise ValueError("bert_model should be one of the pre-specificed settings.")
 
     return dim
+
+
+def pad_and_mask_for_bert_emb(text, tokenizer, max_seq_len):
+    text = [tokenizer.convert_tokens_to_ids(x) for x in tokenizer.tokenize(bert_input_template.format(text))]
+    text = pad_sequences([text], maxlen=max_seq_len, dtype="long", truncating="post", padding="post")[0, :]
+
+    mask = [float(i > 0) for i in text]
+    pool_mask = deepcopy(mask)
+    pool_mask[pool_mask.index(float(False)) - 1] = float(False)
+    pool_mask[0] = float(False)
+    pool_mask = np.array(pool_mask)
+    pool_mask = np.array(pool_mask).reshape(-1, 1)
+    text_len = np.array(pool_mask.sum()).reshape(-1, 1)
+
+    return text, mask, pool_mask, text_len

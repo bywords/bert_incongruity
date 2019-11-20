@@ -26,23 +26,29 @@ class ParaHeadlineAttention(nn.Module):
         return torch.matmul(a.unsqueeze(1), paras).squeeze()  # paras: [N, H_para]
 
 
-class AttnHrDualEncoderModel(nn.Module):
+class AttentionHDE(nn.Module):
     def __init__(self, bert_model, hidden_dims):
-        super(AttnHrDualEncoderModel, self).__init__()
+        super(AttentionHDE, self).__init__()
 
         self.bert = BertModel.from_pretrained(bert_model)
         self.embedding_dim = bert_dim(bert_model)
 
-        self.headline_encoder = nn.GRU(self.embedding_dim, hidden_dims['headline'])
-        self.paragraph_encoder = nn.GRU(self.embedding_dim, hidden_dims['word'])
+        self.head_transform = nn.Linear(self.embedding_dim, hidden_dims["headline"])
+        self.body_transform = nn.Linear(self.embedding_dim, hidden_dims["word"])
 
         self.body_encoder = nn.GRU(hidden_dims['word'], hidden_dims['paragraph'], bidirectional=True)
-        self.attention = ParaHeadlineAttention(2 * hidden_dims['paragraph'], hidden_dims['headline'], 
+        self.attention = ParaHeadlineAttention(2 * hidden_dims['paragraph'], hidden_dims['headline'],
                                                2 * hidden_dims['paragraph'])
         self.bilinear = nn.Bilinear(hidden_dims['headline'], 2 * hidden_dims['paragraph'], 1)
 
-    # def forward(self, inputs):
-    def forward(self, headlines, headline_lengths, bodys, para_lengths):
+    #def forward(self, headlines, headline_lengths, bodys, para_lengths):
+    def forward(self, headline_input_ids, headline_token_type_ids, headline_pool_masks, headline_lens,
+                bodytext_input_ids, bodytext_token_type_ids, bodytext_pool_masks, bodytext_lens,
+                para_lengths):
+        #  headline_input_ids, headline_token_type_ids, headline_pool_masks, headline_lens,
+        #                 bodytext_input_ids, bodytext_token_type_ids, bodytext_pool_masks, bodytext_lens
+
+
         # headline: [N, L_headline], 
         # headline_lengths: [N],
         # bodys: [N, P, L_para], 
@@ -52,11 +58,24 @@ class AttnHrDualEncoderModel(nn.Module):
         #  - GRU inputs: input [seq_len, batch, input_size], h_0 [num_layers * num_directions, batch, hidden_size]
         #  - GRU outputs: output [seq_len, batch, num_directions * hidden_size], h_n [num_layers * num_directions, batch, hidden_size]
 
-        batch_size = len(headlines)  # N
-        x_headline = self.word_embeds(headlines)  # [N, L_headline, H_embed]
+        print(headline_input_ids.size())
+        headline_outputs = self.bert(headline_input_ids, token_type_ids=headline_token_type_ids)[
+            0]
+        headline_mean_hidden = \
+            torch.div(torch.matmul(torch.transpose(headline_outputs, 1, 2), headline_pool_masks), headline_lens)
+        x_headline = headline_mean_hidden.transpose(1, 2)  # (batch,
+        print(x_headline.size())
+        x_headline = self.head_transform(x_headline)
+        print(x_headline.size())
+
+        # achieve the hidden vector for every paragraph of body text
+        print(bodytext_input_ids.size())
+        exit()
+
+
         x_body = self.word_embeds(bodys)  # [N, P, L_para, H_embed]
 
-        _, h_headline = self.headline_encoder(pack_padded_sequence(x_headline, headline_lengths, 
+        _, h_headline = self.headline_encoder(pack_padded_sequence(x_headline, headline_lengths,
                                                                    batch_first=True, enforce_sorted=False))  # _, [1, N, H_enc]
         h_headline = h_headline.squeeze()  # [N, H_enc]
 
