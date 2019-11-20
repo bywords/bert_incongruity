@@ -89,11 +89,11 @@ class AttentionHDE(nn.Module):
         para_mask = (para_lengths == 0)
 
         # unmerge dimensions N and P
-        output_body_packed, _ = self.body_encoder(h_paragraphs)
-        print(output_body_packed.size())
-        exit()
-        output_body, _ = pad_packed_sequence(output_body_packed, 
-                                             batch_first=True, total_length=para_mask.shape[-1])  # [N, P, 2 * H]
+        output_body, _ = self.body_encoder(h_paragraphs)
+        print(output_body.size())
+        # exit()
+        # output_body, _ = pad_packed_sequence(output_body,
+        #                                      batch_first=True, total_length=para_mask.shape[-1])  # [N, P, 2 * H]
 
         h_body = self.attention(output_body, para_mask, h_headline)
 
