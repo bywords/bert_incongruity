@@ -279,22 +279,10 @@ class ParagraphIncongruityIterableDataset(IterableDataset):
         paragraphs_pool_mask = np.array(paragraphs_pool_mask)
         paragraphs_len = np.array(paragraphs_len)
 
-        print(paragraphs.shape)
-        print(paragraphs_mask.shape)
-        print(paragraphs_pool_mask.shape)
-        print(paragraphs_len.shape)
-
         paragraphs = paragraphs[:self.max_para_num]
         paragraphs_mask = paragraphs_mask[:self.max_para_num]
         paragraphs_pool_mask = paragraphs_pool_mask[:self.max_para_num]
         paragraphs_len = paragraphs_len[:self.max_para_num]
-
-        print(paragraphs.shape)
-        print(paragraphs_mask.shape)
-        print(paragraphs_pool_mask.shape)
-        print(paragraphs_len.shape)
-
-        exit()
 
         label = np.array(label).reshape(-1, 1)
 
