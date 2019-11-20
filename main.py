@@ -13,7 +13,7 @@ from transformers import BertTokenizer, AdamW, WarmupLinearSchedule
 
 from data_utils import IncongruityIterableDataset, DataType, tuplify_with_device, bert_dim
 from bert_pool import BertPoolForIncongruity
-from bert_ahde import AttnHrDualEncoderModel
+from bert_ahde import AttentionHDE
 
 
 # To disable kears warnings
@@ -67,7 +67,7 @@ def main(args):
             'word': args.word_level_rnn_hidden_dim,
             'paragraph': args.word_level_rnn_hidden_dim
         }
-        model = AttnHrDualEncoderModel(args.bert_type, hidden_dims)
+        model = AttentionHDE(args.bert_type, hidden_dims)
     else:
         raise ValueError("args.model should be set appropriately.")
     model.cuda()
