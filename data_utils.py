@@ -194,7 +194,7 @@ class IncongruityIterableDataset(IterableDataset):
 
 class ParagraphIncongruityIterableDataset(IterableDataset):
     'Characterizes an Iterabledataset for PyTorch'
-    def __init__(self, tokenizer, max_seq_len, data_type):
+    def __init__(self, tokenizer, max_seq_len, data_type, max_para_num):
         'Initialization'
         if data_type == DataType.Train:
             path = os.path.join("data", "train.tsv")
@@ -222,6 +222,7 @@ class ParagraphIncongruityIterableDataset(IterableDataset):
         self.path = path
         self.tokenizer = tokenizer
         self.max_seq_len = max_seq_len
+        self.max_para_num = max_para_num
 
     def __iter__(self):
 
@@ -259,20 +260,44 @@ class ParagraphIncongruityIterableDataset(IterableDataset):
             paragraphs_pool_mask.append(pool_mask)
             paragraphs_len.append(text_len)
 
-        num_paragraphs = np.array(len(paragraphs_len))
+        num_paragraphs = len(paragraphs_len)
+        null_text = np.zeros_like(text)
+        null_mask = np.zeros_like(mask)
+        null_pool_mask = np.zeros_like(pool_mask)
+        null_text_len = np.zeros_like(text_len)
 
+        if self.max_para_num > num_paragraphs:
+            for _ in range(self.max_para_num - num_paragraphs):
+                paragraphs.append(null_text)
+                paragraphs_mask.append(null_mask)
+                paragraphs_pool_mask.append(null_pool_mask)
+                paragraphs_len.append(null_text_len)
+
+        num_paragraphs = np.array(num_paragraphs)
         paragraphs = np.array(paragraphs)
         paragraphs_mask = np.array(paragraphs_mask)
         paragraphs_pool_mask = np.array(paragraphs_pool_mask)
         paragraphs_len = np.array(paragraphs_len)
 
-        label = np.array(label).reshape(-1, 1)
-
-        print("preprocess")
+        print(num_paragraphs.shape)
         print(paragraphs.shape)
         print(paragraphs_mask.shape)
         print(paragraphs_pool_mask.shape)
         print(paragraphs_len.shape)
+
+        num_paragraphs = num_paragraphs[:self.max_para_num]
+        paragraphs = paragraphs[:self.max_para_num]
+        paragraphs_mask = paragraphs_mask[:self.max_para_num]
+        paragraphs_pool_mask = paragraphs_pool_mask[:self.max_para_num]
+        paragraphs_len = paragraphs_len[:self.max_para_num]
+
+        print(num_paragraphs.shape)
+        print(paragraphs.shape)
+        print(paragraphs_mask.shape)
+        print(paragraphs_pool_mask.shape)
+        print(paragraphs_len.shape)
+
+        label = np.array(label).reshape(-1, 1)
 
         return headline, headline_mask, headline_pool_mask, headline_len, \
                paragraphs, paragraphs_mask, paragraphs_pool_mask, paragraphs_len, \
