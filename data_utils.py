@@ -295,6 +295,9 @@ def pad_and_mask_for_bert_emb(text, tokenizer, max_seq_len):
     text = pad_sequences([text], maxlen=max_seq_len, dtype="long", truncating="post", padding="post")[0, :]
 
     mask = [float(i > 0) for i in text]
+
+    print(mask)
+
     pool_mask = deepcopy(mask)
     pool_mask[pool_mask.index(float(False)) - 1] = float(False)
     pool_mask[0] = float(False)
