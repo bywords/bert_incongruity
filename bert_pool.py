@@ -13,8 +13,7 @@ class BertPoolForIncongruity(nn.Module):
     def __init__(self, vocab_file, hidden_size):
         super(BertPoolForIncongruity, self).__init__()
         self.bert = BertModel.from_pretrained(vocab_file)
-        self.similarity = nn.Parameter(torch.randn(hidden_size, hidden_size))
-        self.similarity_bias = nn.Parameter(torch.randn(1))
+        self.bilinear = nn.Bilinear(hidden_size, hidden_size, 1)
 
     def forward(self, headline_input_ids, headline_token_type_ids, headline_pool_masks, headline_lens,
                 bodytext_input_ids, bodytext_token_type_ids, bodytext_pool_masks, bodytext_lens):
@@ -22,16 +21,12 @@ class BertPoolForIncongruity(nn.Module):
         bodytext_outputs = self.bert(bodytext_input_ids, token_type_ids=bodytext_token_type_ids)[0]  # last hidden states
 
         headline_mean_hidden = \
-            torch.div(torch.matmul(torch.transpose(headline_outputs, 1, 2), headline_pool_masks), headline_lens)
+            torch.div(torch.matmul(torch.transpose(headline_outputs, 1, 2), headline_pool_masks), headline_lens).squeeze()
         bodytext_mean_hidden = \
-            torch.div(torch.matmul(torch.transpose(bodytext_outputs, 1, 2), bodytext_pool_masks), bodytext_lens)
+            torch.div(torch.matmul(torch.transpose(bodytext_outputs, 1, 2), bodytext_pool_masks), bodytext_lens).squeeze()
 
-        headline_mean_hidden = headline_mean_hidden.transpose(1, 2)
         # (batch, 1)
-        logits = torch.matmul(torch.matmul(headline_mean_hidden, self.similarity),
-                              bodytext_mean_hidden) + self.similarity_bias
-
-        return logits.view(-1, 1)
+        return self.bilinear(headline_mean_hidden, bodytext_mean_hidden).view(-1, 1)
 
     def freeze_bert_encoder(self):
         for param in self.bert.parameters():
