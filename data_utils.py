@@ -307,4 +307,10 @@ def pad_and_mask_for_bert_emb(text, tokenizer, max_seq_len):
     text_len = np.array(pool_mask.sum()).reshape(-1, 1)
     mask = np.array(mask)
 
+    print(text.shape)
+    print(mask.shape)
+    print(pool_mask.shape)
+    print(text_len.shape)
+    exit()
+
     return text, mask, pool_mask, text_len
