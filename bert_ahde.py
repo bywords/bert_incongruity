@@ -76,7 +76,7 @@ class AttentionHDE(nn.Module):
             h_paragraph_chunks.append(h_bodytext.unsqueeze(dim=1))
 
         h_paragraphs = torch.cat(h_paragraph_chunks, dim=1).squeeze()
-
+        h_paragraphs = self.body_transform(h_paragraphs)
 
         print(h_headline.size())
         print(h_paragraphs.size())
