@@ -166,7 +166,6 @@ class IncongruityIterableDataset(IterableDataset):
         return mapped_itr
 
     def line_mapper(self, line):
-
         # Splits the line into text and label and applies preprocessing to the text
         df = pd.read_csv(StringIO(line), sep="\t", header=None)
         headline, h_mask, h_pool_mask, h_len, bodytext, b_mask, b_pool_mask, b_len, label = \
@@ -175,7 +174,6 @@ class IncongruityIterableDataset(IterableDataset):
         return headline, h_mask, h_pool_mask, h_len, bodytext, b_mask, b_pool_mask, b_len, label
 
     def preprocess(self, headline, bodytext, label):
-
         headline, headline_mask, headline_pool_mask, headline_len = pad_and_mask_for_bert_emb(headline,
                                                                                               self.tokenizer,
                                                                                               self.max_seq_len)
@@ -237,7 +235,7 @@ class ParagraphIncongruityIterableDataset(IterableDataset):
     def line_mapper(self, line):
         # Splits the line into text and label and applies preprocessing to the text
         df = pd.read_csv(StringIO(line), sep="\t", header=None)
-        headline, h_mask, h_pool_mask, h_len, paragraphs, p_mask, p_pool_mask, p_len, num_p, label = \
+        headline, h_mask, h_pool_mask, h_len, paragraphs, p_mask, p_pool_mask, p_len, label = \
             self.preprocess(df.iloc[0, 1], df.iloc[0, 2], df.iloc[0, 3])
 
         return headline, h_mask, h_pool_mask, h_len, paragraphs, p_mask, p_pool_mask, p_len, label
@@ -273,7 +271,6 @@ class ParagraphIncongruityIterableDataset(IterableDataset):
                 paragraphs_pool_mask.append(null_pool_mask)
                 paragraphs_len.append(null_text_len)
 
-        num_paragraphs = np.array(num_paragraphs)
         paragraphs = np.array(paragraphs)
         paragraphs_mask = np.array(paragraphs_mask)
         paragraphs_pool_mask = np.array(paragraphs_pool_mask)
@@ -288,7 +285,7 @@ class ParagraphIncongruityIterableDataset(IterableDataset):
 
         return headline, headline_mask, headline_pool_mask, headline_len, \
                paragraphs, paragraphs_mask, paragraphs_pool_mask, paragraphs_len, \
-               num_paragraphs, label
+               label
 
 
 def tuplify_with_device(batch, device):
@@ -296,7 +293,7 @@ def tuplify_with_device(batch, device):
                   batch[2].to(device, dtype=torch.float), batch[3].to(device, dtype=torch.float),
                   batch[4].to(device, dtype=torch.long), batch[5].to(device, dtype=torch.long),
                   batch[6].to(device, dtype=torch.float), batch[7].to(device, dtype=torch.float),
-                  batch[7].to(device, dtype=torch.long), batch[8].to(device, dtype=torch.float)])
+                  batch[8].to(device, dtype=torch.float)])
 
 
 def bert_dim(bert_model):

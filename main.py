@@ -132,14 +132,13 @@ def main(args):
                 # Unpack the inputs from our dataloader
                 b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens,\
                 b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens, \
-                b_num_paras, b_labels = batch
+                b_labels = batch
                 # Clear out the gradients (by default they accumulate)
                 optimizer.zero_grad()
 
                 # Forward pass
                 b_logits = model(b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens,
-                                 b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens,
-                                 b_num_paras)
+                                 b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens)
                 loss = loss_fct(b_logits.view(-1, 1), b_labels.view(-1, 1))
                 train_loss_set.append(loss.item())
 
@@ -173,13 +172,12 @@ def main(args):
                 # Unpack the inputs from our dataloader
                 b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens, \
                 b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens, \
-                b_num_paras,b_labels = batch
+                b_labels = batch
                 # Telling the model not to compute or store gradients, saving memory and speeding up validation
                 with torch.no_grad():
                     # Forward pass, calculate logit predictions
                     preds = torch.sigmoid(model(b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens,
-                                                b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens,
-                                                b_num_paras))
+                                                b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens))
 
                 # Move logits and labels to CPU
                 preds = preds.detach().cpu().numpy()
@@ -218,8 +216,7 @@ def main(args):
         with torch.no_grad():
             # Forward pass, calculate logit predictions
             preds = torch.sigmoid(model(b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens,
-                                        b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens,
-                                        b_num_paras))
+                                        b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens))
 
         # Move logits and labels to CPU
         preds = preds.detach().cpu().numpy()

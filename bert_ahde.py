@@ -45,26 +45,13 @@ class AttentionHDE(nn.Module):
 
     #def forward(self, headlines, headline_lengths, bodys, para_lengths):
     def forward(self, headline_input_ids, headline_token_type_ids, headline_pool_masks, headline_lens,
-                bodytext_input_ids, bodytext_token_type_ids, bodytext_pool_masks, bodytext_lens,
-                para_lengths):
-        #  headline_input_ids, headline_token_type_ids, headline_pool_masks, headline_lens,
-        #                 bodytext_input_ids, bodytext_token_type_ids, bodytext_pool_masks, bodytext_lens
-
-
-        # headline: [N, L_headline], 
-        # headline_lengths: [N],
-        # bodys: [N, P, L_para], 
-        # para_lengths: [N, P]
-        #
-        # Note
-        #  - GRU inputs: input [seq_len, batch, input_size], h_0 [num_layers * num_directions, batch, hidden_size]
-        #  - GRU outputs: output [seq_len, batch, num_directions * hidden_size], h_n [num_layers * num_directions, batch, hidden_size]
+                bodytext_input_ids, bodytext_token_type_ids, bodytext_pool_masks, bodytext_lens):
 
         headline_outputs = self.bert(headline_input_ids, token_type_ids=headline_token_type_ids)[0]
         headline_mean_hidden = \
             torch.div(torch.matmul(torch.transpose(headline_outputs, 1, 2), headline_pool_masks), headline_lens)
-        x_headline = headline_mean_hidden.transpose(1, 2)  # (batch,
-        x_headline = self.head_transform(x_headline)
+        h_headline = headline_mean_hidden.transpose(1, 2)  # (batch,
+        h_headline = self.head_transform(h_headline).squeeze()
 
         # achieve the hidden vector for every paragraph of body text
         bodytext_input_ids_chunks = torch.chunk(bodytext_input_ids, chunks=self.max_para_num, dim=1)
@@ -72,7 +59,7 @@ class AttentionHDE(nn.Module):
         bodytext_pool_masks_chunks = torch.chunk(bodytext_pool_masks, chunks=self.max_para_num, dim=1)
         bodytext_lens_chunks = torch.chunk(bodytext_lens, chunks=self.max_para_num, dim=1)
 
-        x_bodytext_chunks = []
+        h_paragraph_chunks = []
         for bodytext_input_id, bodytext_token_type_id, bodytext_pool_mask, bodytext_len in \
                 zip(bodytext_input_ids_chunks, bodytext_token_type_ids_chunks, bodytext_pool_masks_chunks, bodytext_lens_chunks):
 
@@ -84,39 +71,23 @@ class AttentionHDE(nn.Module):
             bodytext_outputs = self.bert(bodytext_input_id, token_type_ids=bodytext_token_type_id)[0]
             bodytext_mean_hidden = \
                 torch.div(torch.matmul(torch.transpose(bodytext_outputs, 1, 2), bodytext_pool_mask), bodytext_len)
-            x_bodytext = bodytext_mean_hidden.transpose(1, 2)
+            h_bodytext = bodytext_mean_hidden.transpose(1, 2)
 
-            x_bodytext_chunks.append(x_bodytext.unsqueeze(dim=1))
+            h_paragraph_chunks.append(h_bodytext.unsqueeze(dim=1))
 
-        x_bodytext = torch.cat(x_bodytext_chunks, dim=1).squeeze()
+        h_paragraphs = torch.cat(h_paragraph_chunks, dim=1).squeeze()
 
 
-        print(x_headline.size())
-        print(x_bodytext.size())
+        print(h_headline.size())
+        print(h_paragraphs.size())
         print(bodytext_lens.size())
-        exit()
 
-
-
-        # batch, para, hidden
-
-        # para_lengths = [N, P]
-        #
-
-        x_body = self.word_embeds(bodys)  # [N, P, L_para, H_embed]
-
+        para_lengths = bodytext_lens.squeeze()
         valid_para_lengths = (para_lengths != 0).sum(dim=1).tolist()
         para_mask = (para_lengths == 0)
-        # merge dimensions N and P
-        para_lengths = para_lengths.flatten()
-        para_lengths_masked = para_lengths[para_lengths != 0]
-        x_paras_masked = x_body.flatten(0,1)[para_lengths != 0]
-
-        _, h_paras_masked = self.paragraph_encoder(pack_padded_sequence(x_paras_masked, para_lengths_masked, 
-                                                                        batch_first=True, enforce_sorted=False))
 
         # unmerge dimensions N and P
-        h_paras_grouped = h_paras_masked.squeeze().split(valid_para_lengths)
+        h_paras_grouped = h_paragraphs.split(valid_para_lengths)
         h_paras = pad_sequence(h_paras_grouped)
 
         output_body_packed, _ = self.body_encoder(pack_padded_sequence(h_paras, valid_para_lengths, enforce_sorted=False))
