@@ -72,6 +72,11 @@ class AttentionHDE(nn.Module):
         bodytext_pool_masks_chunks = torch.chunk(bodytext_pool_masks, chunks=self.max_para_num, dim=1)
         bodytext_lens_chunks = torch.chunk(bodytext_lens, chunks=self.max_para_num, dim=1)
 
+        print(bodytext_input_ids.size())
+        print(bodytext_token_type_ids.size())
+        print(bodytext_pool_masks.size())
+        print(bodytext_lens.size())
+
         x_bodytext_chunks = []
         for bodytext_input_id, bodytext_token_type_id, bodytext_pool_mask, bodytext_len in \
                 zip(bodytext_input_ids_chunks, bodytext_token_type_ids_chunks, bodytext_pool_masks_chunks, bodytext_lens_chunks):
