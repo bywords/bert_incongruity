@@ -59,8 +59,8 @@ class AttentionHDE(nn.Module):
         #  - GRU outputs: output [seq_len, batch, num_directions * hidden_size], h_n [num_layers * num_directions, batch, hidden_size]
 
         print(headline_input_ids.size())
-        headline_outputs = self.bert(headline_input_ids, token_type_ids=headline_token_type_ids)[
-            0]
+        print(headline_token_type_ids.size())
+        headline_outputs = self.bert(headline_input_ids, token_type_ids=headline_token_type_ids)[0]
         headline_mean_hidden = \
             torch.div(torch.matmul(torch.transpose(headline_outputs, 1, 2), headline_pool_masks), headline_lens)
         x_headline = headline_mean_hidden.transpose(1, 2)  # (batch,
