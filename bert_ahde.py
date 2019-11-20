@@ -75,6 +75,12 @@ class AttentionHDE(nn.Module):
         x_bodytext_chunks = []
         for bodytext_input_id, bodytext_token_type_id, bodytext_pool_mask, bodytext_len in \
                 zip(bodytext_input_ids_chunks, bodytext_token_type_ids_chunks, bodytext_pool_masks_chunks, bodytext_lens_chunks):
+
+            print(bodytext_input_id.size())
+            print(bodytext_token_type_id.size())
+            print(bodytext_pool_mask.size())
+            print(bodytext_len.size())
+
             bodytext_outputs = self.bert(bodytext_input_id, token_type_ids=bodytext_token_type_id)[0]
             bodytext_mean_hidden = \
                 torch.div(torch.matmul(torch.transpose(bodytext_outputs, 1, 2), bodytext_pool_mask), bodytext_len)
