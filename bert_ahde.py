@@ -27,7 +27,7 @@ class ParaHeadlineAttention(nn.Module):
 
 
 class AttentionHDE(nn.Module):
-    def __init__(self, bert_model, hidden_dims):
+    def __init__(self, bert_model, hidden_dims, max_para_len):
         super(AttentionHDE, self).__init__()
 
         self.bert = BertModel.from_pretrained(bert_model)
@@ -40,6 +40,8 @@ class AttentionHDE(nn.Module):
         self.attention = ParaHeadlineAttention(2 * hidden_dims['paragraph'], hidden_dims['headline'],
                                                2 * hidden_dims['paragraph'])
         self.bilinear = nn.Bilinear(hidden_dims['headline'], 2 * hidden_dims['paragraph'], 1)
+
+        self.max_para_len = max_para_len
 
     #def forward(self, headlines, headline_lengths, bodys, para_lengths):
     def forward(self, headline_input_ids, headline_token_type_ids, headline_pool_masks, headline_lens,
@@ -62,6 +64,7 @@ class AttentionHDE(nn.Module):
         print(headline_token_type_ids.size())
         headline_outputs = self.bert(headline_input_ids, token_type_ids=headline_token_type_ids)[0]
         print(headline_outputs.size())
+        print(headline_pool_masks.size())
         headline_mean_hidden = \
             torch.div(torch.matmul(torch.transpose(headline_outputs, 1, 2), headline_pool_masks), headline_lens)
         x_headline = headline_mean_hidden.transpose(1, 2)  # (batch,
@@ -74,14 +77,22 @@ class AttentionHDE(nn.Module):
         print(bodytext_token_type_ids.size())
 
         bodytext_input_ids = bodytext_input_ids.view(-1, self.embedding_dim)
+        bodytext_input_ids_chunks = torch.chunk(bodytext_input_ids, chunks=self.max_para_len, dim=0)
+
         bodytext_token_type_ids = bodytext_token_type_ids.view(-1, self.embedding_dim)
+        bodytext_token_type_ids_chunks = torch.chunk(bodytext_token_type_ids, chunks=self.max_para_len, dim=0)
 
         print(bodytext_input_ids.size())
         print(bodytext_token_type_ids.size())
-
-        bodytext_outputs = self.bert(bodytext_input_ids, token_type_ids=bodytext_token_type_ids)[0]
-        print(bodytext_outputs.size())
+        print(bodytext_pool_masks.size())
         exit()
+
+        bodytext_output_chunks = []
+        for bodytext_input_id, bodytext_token_type_id in zip(bodytext_input_ids_chunks, bodytext_token_type_ids_chunks):
+            bodytext_outputs = self.bert(bodytext_input_id, token_type_ids=bodytext_token_type_id)[0]
+            bodytext_output_chunks.append(bodytext_outputs)
+        bodytext_outputs = torch.cat(bodytext_output_chunks, dim=1)
+
         headline_mean_hidden = \
             torch.div(torch.matmul(torch.transpose(headline_outputs, 1, 2), headline_pool_masks), headline_lens)
 
