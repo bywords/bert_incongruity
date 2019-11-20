@@ -294,13 +294,14 @@ def pad_and_mask_for_bert_emb(text, tokenizer, max_seq_len):
     text = [tokenizer.convert_tokens_to_ids(x) for x in tokenizer.tokenize(bert_input_template.format(text))]
     text = pad_sequences([text], maxlen=max_seq_len, dtype="long", truncating="post", padding="post")[0, :]
 
+    token_out_of_seq = float(False)
     mask = [float(i > 0) for i in text]
-
-    print(mask)
-
     pool_mask = deepcopy(mask)
-    pool_mask[pool_mask.index(float(False)) - 1] = float(False)
-    pool_mask[0] = float(False)
+
+    if token_out_of_seq in pool_mask:
+        pool_mask[pool_mask.index(token_out_of_seq) - 1] = token_out_of_seq
+
+    pool_mask[0] = token_out_of_seq
     pool_mask = np.array(pool_mask)
     pool_mask = np.array(pool_mask).reshape(-1, 1)
     text_len = np.array(pool_mask.sum()).reshape(-1, 1)
