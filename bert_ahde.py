@@ -100,3 +100,11 @@ class AttentionHDE(nn.Module):
         h_body = self.attention(output_body, para_mask, h_headline)
 
         return self.bilinear(h_headline, h_body).squeeze()
+
+    def freeze_bert_encoder(self):
+        for param in self.bert.parameters():
+            param.requires_grad = False
+
+    def unfreeze_bert_encoder(self):
+        for param in self.bert.parameters():
+            param.requires_grad = True
