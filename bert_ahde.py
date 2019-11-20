@@ -78,23 +78,11 @@ class AttentionHDE(nn.Module):
         h_paragraphs = torch.cat(h_paragraph_chunks, dim=1).squeeze()
         h_paragraphs = self.body_transform(h_paragraphs)
 
-        print(h_headline.size())
-        print(h_paragraphs.size())
-        print(bodytext_lens.size())
-
         para_lengths = bodytext_lens.squeeze()
-        print(para_lengths.size())
-        valid_para_lengths = (para_lengths != 0).sum(dim=1).tolist()
-        print(len(valid_para_lengths))
         para_mask = (para_lengths == 0)
 
         # unmerge dimensions N and P
         output_body, _ = self.body_encoder(h_paragraphs)
-        print(output_body.size())
-        # exit()
-        # output_body, _ = pad_packed_sequence(output_body,
-        #                                      batch_first=True, total_length=para_mask.shape[-1])  # [N, P, 2 * H]
-
         h_body = self.attention(output_body, para_mask, h_headline)
 
         return self.bilinear(h_headline, h_body).squeeze()
