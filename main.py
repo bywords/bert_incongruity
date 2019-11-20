@@ -11,7 +11,7 @@ from torch.utils import data
 from sklearn.metrics import accuracy_score, roc_auc_score
 from transformers import BertTokenizer, AdamW, WarmupLinearSchedule
 
-from data_utils import IncongruityIterableDataset, DataType, tuplify_with_device, bert_dim
+from data_utils import ParagraphIncongruityIterableDataset, IncongruityIterableDataset, DataType, tuplify_with_device, bert_dim
 from bert_pool import BertPoolForIncongruity
 from bert_ahde import AttentionHDE
 
@@ -78,16 +78,29 @@ def main(args):
         model.unfreeze_bert_encoder()
 
     # cannot shuffle with iterable dataset
-    test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Test)
+    if args.model == "pool":
+        test_set = \
+            IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Test)
+        dev_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Dev)
+
+        training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                                  data_type=DataType.Train)
+    elif args.model =="ahde":
+        test_set = \
+            ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                                data_type=DataType.Test)
+        dev_set = ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Dev)
+        training_set = ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                                           data_type=DataType.Train)
+    else:
+        raise ValueError("args.model should be set properly.")
+
     test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
 
     if args.mode == "train":
 
         # tokenizer, max_seq_len, filename
-        training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Train)
         train_dataloader = data.DataLoader(training_set, batch_size=args.batch_size)
-
-        dev_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Dev)
         dev_dataloader = data.DataLoader(dev_set, batch_size=args.batch_size)
 
         # Define optimizers
