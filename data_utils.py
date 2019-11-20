@@ -268,11 +268,11 @@ class ParagraphIncongruityIterableDataset(IterableDataset):
 
         label = np.array(label).reshape(-1, 1)
 
+        print("preprocess")
         print(paragraphs.shape)
         print(paragraphs_mask.shape)
         print(paragraphs_pool_mask.shape)
         print(paragraphs_len.shape)
-        exit()
 
         return headline, headline_mask, headline_pool_mask, headline_len, \
                paragraphs, paragraphs_mask, paragraphs_pool_mask, paragraphs_len, \
