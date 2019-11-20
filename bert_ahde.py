@@ -89,8 +89,7 @@ class AttentionHDE(nn.Module):
         para_mask = (para_lengths == 0)
 
         # unmerge dimensions N and P
-        output_body_packed, _ = self.body_encoder(pack_padded_sequence(h_paragraphs,
-                                                                       valid_para_lengths, enforce_sorted=False))
+        output_body_packed, _ = self.body_encoder(h_paragraphs)
         print(output_body_packed.size())
         exit()
         output_body, _ = pad_packed_sequence(output_body_packed, 
