@@ -56,6 +56,7 @@ def main(args):
 
     # Number of training epochs (authors recommend between 2 and 4)
     epochs = args.max_epochs
+    print(args.bert_type)
     tokenizer = BertTokenizer.from_pretrained(args.bert_type, do_lower_case=True)
 
     if args.model == "pool":
