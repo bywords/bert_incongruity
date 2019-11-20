@@ -61,6 +61,7 @@ class AttentionHDE(nn.Module):
         print(headline_input_ids.size())
         print(headline_token_type_ids.size())
         headline_outputs = self.bert(headline_input_ids, token_type_ids=headline_token_type_ids)[0]
+        print(headline_outputs.size())
         headline_mean_hidden = \
             torch.div(torch.matmul(torch.transpose(headline_outputs, 1, 2), headline_pool_masks), headline_lens)
         x_headline = headline_mean_hidden.transpose(1, 2)  # (batch,
@@ -70,7 +71,13 @@ class AttentionHDE(nn.Module):
 
         # achieve the hidden vector for every paragraph of body text
         print(bodytext_input_ids.size())
-        exit()
+
+        print(bodytext_input_ids.size())
+        bodytext_outputs = self.bert(bodytext_input_ids, token_type_ids=headline_token_type_ids)[0]
+        print(bodytext_outputs.size())
+        headline_mean_hidden = \
+            torch.div(torch.matmul(torch.transpose(headline_outputs, 1, 2), headline_pool_masks), headline_lens)
+
 
 
         x_body = self.word_embeds(bodys)  # [N, P, L_para, H_embed]
