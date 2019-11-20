@@ -231,7 +231,7 @@ if __name__ == "__main__":
     ## Other parameters
     parser.add_argument("--output_dir", default="output/", type=str, help="root directory for output")
     parser.add_argument("--seed", default=False, type=float, help="floating value for random seed")
-    parser.add_argument("--bert_type", default=False, type=float, help="bert pretrained model type. e.g., 'bert-base-uncased'")
+    parser.add_argument("--bert_type", default=False, type=str, help="bert pretrained model type. e.g., 'bert-base-uncased'")
     parser.add_argument("--freeze", default=False, type=bool, help="whether bert parameters are freezed")
     parser.add_argument("--learning_rate", default=1e-3, type=float, help="Learning rate")
     parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max values for gradient clipping")
