@@ -11,8 +11,9 @@ from torch.utils import data
 from sklearn.metrics import accuracy_score, roc_auc_score
 from transformers import BertTokenizer, AdamW, WarmupLinearSchedule
 
-from data_utils import IncongruityIterableDataset, DataType, flat_accuracy, tuplify_with_device
+from data_utils import IncongruityIterableDataset, DataType, tuplify_with_device, bert_dim
 from bert_pool import BertPoolForIncongruity
+from bert_ahde import AttnHrDualEncoderModel
 
 
 # To disable kears warnings
@@ -55,9 +56,19 @@ def main(args):
 
     # Number of training epochs (authors recommend between 2 and 4)
     epochs = args.max_epochs
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+    tokenizer = BertTokenizer.from_pretrained(args.bert_type, do_lower_case=True)
 
-    model = BertPoolForIncongruity('bert-base-uncased', hidden_size=args.hidden_dim)
+    if args.model == "pool":
+        model = BertPoolForIncongruity(args.bert_type, hidden_size=bert_dim(args.bert_type))
+    elif args.model == "ahde":
+        hidden_dims = \
+            {'headline': args.headline_rnn_hidden_dim,
+            'word': args.word_level_rnn_hidden_dim,
+            'paragraph': args.word_level_rnn_hidden_dim
+        }
+        model = AttnHrDualEncoderModel(args.bert_type, hidden_dims)
+    else:
+        raise ValueError("args.model should be set appropriately.")
     model.cuda()
 
     if args.freeze:
@@ -209,7 +220,9 @@ if __name__ == "__main__":
 
     ## Required parameters
     parser.add_argument("--mode", default=None, type=str, required=True,
-                        help="model: train / test")
+                        help="mode: train / test")
+    parser.add_argument("--model", default=None, type=str, required=True,
+                        help="model: pool / ahde")
     parser.add_argument("--model_file", default=None, type=str, required=True,
                         help="The input training data file (a text file).")
     parser.add_argument("--exp_id", default=None, type=str, required=True,
@@ -218,6 +231,7 @@ if __name__ == "__main__":
     ## Other parameters
     parser.add_argument("--output_dir", default="output/", type=str, help="root directory for output")
     parser.add_argument("--seed", default=False, type=float, help="floating value for random seed")
+    parser.add_argument("--bert_type", default=False, type=float, help="bert pretrained model type. e.g., 'bert-base-uncased'")
     parser.add_argument("--freeze", default=False, type=bool, help="whether bert parameters are freezed")
     parser.add_argument("--learning_rate", default=1e-3, type=float, help="Learning rate")
     parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max values for gradient clipping")
@@ -226,7 +240,9 @@ if __name__ == "__main__":
     parser.add_argument("--max_seq_len", default=512, type=int, help="For AdamW Secheduler")
     parser.add_argument("--batch_size", default=64, type=int, help="Batch size")
     parser.add_argument("--max_epochs", default=4, type=int, help="Number of max epochs for training. btw 2 and 4 are recommended.")
-    parser.add_argument("--hidden_dim", default=768, type=int, help="Hidden dims for headline and body text")
+    parser.add_argument("--headline-rnn-hidden-dim", default=768, type=int)
+    parser.add_argument("--word-level-rnn-hidden-dim", default=768, type=int)
+    parser.add_argument("--paragraph-level-rnn-hidden-dim", default=768, type=int)
     parser.add_argument("--gpu_id", default=2, type=int, help="cuda device index")
 
     args = parser.parse_args()

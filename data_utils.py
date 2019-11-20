@@ -177,6 +177,95 @@ class IncongruityIterableDataset(IterableDataset):
     def preprocess(self, headline, bodytext, label):
         headline = [self.tokenizer.convert_tokens_to_ids(x)
                     for x in self.tokenizer.tokenize(bert_input_template.format(headline))]
+        bodytext_parsed_str = " ".join(list(filter(lambda x: x not in ["<EOS>", "<EOP>"], bodytext.split())))
+
+        print(bodytext)
+        print(bodytext_parsed_str)
+        exit()
+
+        bodytext = [self.tokenizer.convert_tokens_to_ids(x)
+                    for x in self.tokenizer.tokenize(bert_input_template.format(bodytext_parsed_str))]
+        headline = pad_sequences([headline], maxlen=self.max_seq_len,
+                                 dtype="long", truncating="post", padding="post")[0, :]
+        bodytext = pad_sequences([bodytext], maxlen=self.max_seq_len,
+                                 dtype="long", truncating="post", padding="post")[0, :]
+
+        headline_mask = [float(i > 0) for i in headline]
+        headline_pool_mask = deepcopy(headline_mask)
+        headline_pool_mask[headline_pool_mask.index(float(False)) - 1] = float(False)
+        headline_pool_mask[0] = float(False)
+        headline_mask = np.array(headline_mask)
+        headline_pool_mask = np.array(headline_pool_mask).reshape(-1, 1)
+        headline_len = np.array(headline_pool_mask.sum()).reshape(-1, 1)
+
+        bodytext_mask = [float(i > 0) for i in headline]
+        bodytext_pool_mask = deepcopy(bodytext_mask)
+        bodytext_pool_mask[bodytext_pool_mask.index(float(False)) - 1] = float(False)
+        bodytext_pool_mask[0] = float(False)
+        bodytext_mask = np.array(bodytext_mask)
+        bodytext_pool_mask = np.array(bodytext_pool_mask).reshape(-1, 1)
+        bodytext_len = np.array(bodytext_pool_mask.sum()).reshape(-1, 1)
+
+        label = np.array(label).reshape(-1, 1)
+
+        return headline, headline_mask, headline_pool_mask, headline_len, \
+               bodytext, bodytext_mask, bodytext_pool_mask, bodytext_len, \
+               label
+
+
+class ParagraphIncongruityIterableDataset(IterableDataset):
+    'Characterizes an Iterabledataset for PyTorch'
+    def __init__(self, tokenizer, max_seq_len, data_type):
+        'Initialization'
+        if data_type == DataType.Train:
+            path = os.path.join("data", "train.tsv")
+        elif data_type == DataType.Dev:
+            path = os.path.join("data", "dev.tsv")
+        elif data_type == DataType.Test:
+            path = os.path.join("data", "test.tsv")
+        elif data_type == DataType.Test_0:
+            path = os.path.join("data", "test_type_0.tsv")
+        elif data_type == DataType.Test_1:
+            path = os.path.join("data", "test_type_1.tsv")
+        elif data_type == DataType.Test_2:
+            path = os.path.join("data", "test_type_2.tsv")
+        elif data_type == DataType.Test_3:
+            path = os.path.join("data", "test_type_3.tsv")
+        elif data_type == DataType.Train_sample:
+            path = os.path.join("data", "train_sample.tsv")
+        elif data_type == DataType.Dev_sample:
+            path = os.path.join("data", "dev_sample.tsv")
+        elif data_type == DataType.Test_sample:
+            path = os.path.join("data", "test_sample.tsv")
+        else:
+            raise TypeError("data_type should be DataType class.")
+
+        self.path = path
+        self.tokenizer = tokenizer
+        self.max_seq_len = max_seq_len
+
+    def __iter__(self):
+
+        # Create an iterator
+        file_itr = open(self.path)
+
+        # Map each element using the line_mapper
+        mapped_itr = map(self.line_mapper, file_itr)
+
+        return mapped_itr
+
+    def line_mapper(self, line):
+
+        # Splits the line into text and label and applies preprocessing to the text
+        df = pd.read_csv(StringIO(line), sep="\t", header=None)
+        headline, h_mask, h_pool_mask, h_len, bodytext, b_mask, b_pool_mask, b_len, label = \
+            self.preprocess(df.iloc[0, 1], df.iloc[0, 2], df.iloc[0, 3])
+
+        return headline, h_mask, h_pool_mask, h_len, bodytext, b_mask, b_pool_mask, b_len, label
+
+    def preprocess(self, headline, bodytext, label):
+        headline = [self.tokenizer.convert_tokens_to_ids(x)
+                    for x in self.tokenizer.tokenize(bert_input_template.format(headline))]
         bodytext = [self.tokenizer.convert_tokens_to_ids(x)
                     for x in self.tokenizer.tokenize(bert_input_template.format(bodytext))]
         headline = pad_sequences([headline], maxlen=self.max_seq_len,
@@ -220,3 +309,12 @@ def tuplify_with_device(batch, device):
                   batch[4].to(device, dtype=torch.long), batch[5].to(device, dtype=torch.long),
                   batch[6].to(device, dtype=torch.float), batch[7].to(device, dtype=torch.float),
                   batch[8].to(device, dtype=torch.float)])
+
+
+def bert_dim(bert_model):
+    if bert_model == "bert-base-uncased":
+        dim = 768
+    else:
+        raise ValueError("bert_model should be one of the pre-specificed settings.")
+
+    return dim
