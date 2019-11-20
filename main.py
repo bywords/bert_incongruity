@@ -248,9 +248,9 @@ if __name__ == "__main__":
     parser.add_argument("--max_seq_len", default=512, type=int, help="For AdamW Secheduler")
     parser.add_argument("--batch_size", default=64, type=int, help="Batch size")
     parser.add_argument("--max_epochs", default=4, type=int, help="Number of max epochs for training. btw 2 and 4 are recommended.")
-    parser.add_argument("--headline-rnn-hidden-dim", default=768, type=int)
-    parser.add_argument("--word-level-rnn-hidden-dim", default=768, type=int)
-    parser.add_argument("--paragraph-level-rnn-hidden-dim", default=768, type=int)
+    parser.add_argument("--headline-rnn-hidden-dim", default=384, type=int)
+    parser.add_argument("--word-level-rnn-hidden-dim", default=384, type=int)
+    parser.add_argument("--paragraph-level-rnn-hidden-dim", default=384, type=int)
     parser.add_argument("--gpu_id", default=2, type=int, help="cuda device index")
 
     args = parser.parse_args()
