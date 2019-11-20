@@ -89,7 +89,8 @@ def main(args):
         test_set = \
             ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
                                                 data_type=DataType.Test, max_para_num=args.max_paragraph_num)
-        dev_set = ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Dev)
+        dev_set = ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                                      data_type=DataType.Dev, max_para_num=args.max_paragraph_num)
         training_set = ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
                                                            data_type=DataType.Train, max_para_num=args.max_paragraph_num)
     else:
