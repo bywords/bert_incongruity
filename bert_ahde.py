@@ -66,6 +66,8 @@ class AttentionHDE(nn.Module):
         x_headline = headline_mean_hidden.transpose(1, 2)  # (batch,
         x_headline = self.head_transform(x_headline)
 
+        print(x_headline.shape)
+
         # achieve the hidden vector for every paragraph of body text
         bodytext_input_ids_chunks = torch.chunk(bodytext_input_ids, chunks=self.max_para_num, dim=1)
         bodytext_token_type_ids_chunks = torch.chunk(bodytext_token_type_ids, chunks=self.max_para_num, dim=1)
