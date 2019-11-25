@@ -126,28 +126,28 @@ class IncongruityDataset(Dataset):
 
 class IncongruityIterableDataset(IterableDataset):
     'Characterizes an Iterabledataset for PyTorch'
-    def __init__(self, tokenizer, max_seq_len, data_type):
+    def __init__(self, tokenizer, max_seq_len, data_dir, data_type):
         'Initialization'
         if data_type == DataType.Train:
-            path = os.path.join("data", "train.tsv")
+            path = os.path.join(data_dir, "train.tsv")
         elif data_type == DataType.Dev:
-            path = os.path.join("data", "dev.tsv")
+            path = os.path.join(data_dir, "dev.tsv")
         elif data_type == DataType.Test:
-            path = os.path.join("data", "test.tsv")
+            path = os.path.join(data_dir, "test.tsv")
         elif data_type == DataType.Test_0:
-            path = os.path.join("data", "test_type_0.tsv")
+            path = os.path.join(data_dir, "test_type_0.tsv")
         elif data_type == DataType.Test_1:
-            path = os.path.join("data", "test_type_1.tsv")
+            path = os.path.join(data_dir, "test_type_1.tsv")
         elif data_type == DataType.Test_2:
-            path = os.path.join("data", "test_type_2.tsv")
+            path = os.path.join(data_dir, "test_type_2.tsv")
         elif data_type == DataType.Test_3:
-            path = os.path.join("data", "test_type_3.tsv")
+            path = os.path.join(data_dir, "test_type_3.tsv")
         elif data_type == DataType.Train_sample:
-            path = os.path.join("data", "train_sample.tsv")
+            path = os.path.join(data_dir, "train_sample.tsv")
         elif data_type == DataType.Dev_sample:
-            path = os.path.join("data", "dev_sample.tsv")
+            path = os.path.join(data_dir, "dev_sample.tsv")
         elif data_type == DataType.Test_sample:
-            path = os.path.join("data", "test_sample.tsv")
+            path = os.path.join(data_dir, "test_sample.tsv")
         else:
             raise TypeError("data_type should be DataType class.")
 
@@ -192,28 +192,28 @@ class IncongruityIterableDataset(IterableDataset):
 
 class ParagraphIncongruityIterableDataset(IterableDataset):
     'Characterizes an Iterabledataset for PyTorch'
-    def __init__(self, tokenizer, max_seq_len, data_type, max_para_num):
+    def __init__(self, tokenizer, max_seq_len, data_dir, data_type, max_para_num):
         'Initialization'
         if data_type == DataType.Train:
-            path = os.path.join("data", "train.tsv")
+            path = os.path.join(data_dir, "train.tsv")
         elif data_type == DataType.Dev:
-            path = os.path.join("data", "dev.tsv")
+            path = os.path.join(data_dir, "dev.tsv")
         elif data_type == DataType.Test:
-            path = os.path.join("data", "test.tsv")
+            path = os.path.join(data_dir, "test.tsv")
         elif data_type == DataType.Test_0:
-            path = os.path.join("data", "test_type_0.tsv")
+            path = os.path.join(data_dir, "test_type_0.tsv")
         elif data_type == DataType.Test_1:
-            path = os.path.join("data", "test_type_1.tsv")
+            path = os.path.join(data_dir, "test_type_1.tsv")
         elif data_type == DataType.Test_2:
-            path = os.path.join("data", "test_type_2.tsv")
+            path = os.path.join(data_dir, "test_type_2.tsv")
         elif data_type == DataType.Test_3:
-            path = os.path.join("data", "test_type_3.tsv")
+            path = os.path.join(data_dir, "test_type_3.tsv")
         elif data_type == DataType.Train_sample:
-            path = os.path.join("data", "train_sample.tsv")
+            path = os.path.join(data_dir, "train_sample.tsv")
         elif data_type == DataType.Dev_sample:
-            path = os.path.join("data", "dev_sample.tsv")
+            path = os.path.join(data_dir, "dev_sample.tsv")
         elif data_type == DataType.Test_sample:
-            path = os.path.join("data", "test_sample.tsv")
+            path = os.path.join(data_dir, "test_sample.tsv")
         else:
             raise TypeError("data_type should be DataType class.")
 

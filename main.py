@@ -80,19 +80,24 @@ def main(args):
     # cannot shuffle with iterable dataset
     if args.model == "pool":
         test_set = \
-            IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Test)
-        dev_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len, data_type=DataType.Dev)
+            IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                       data_dir=args.data_dir, data_type=DataType.Test)
+        dev_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                             data_dir=args.data_dir, data_type=DataType.Dev)
 
         training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                  data_type=DataType.Train)
+                                                  data_dir=args.data_dir, data_type=DataType.Train)
     elif args.model =="ahde":
         test_set = \
             ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                data_type=DataType.Test, max_para_num=args.max_paragraph_num)
+                                                data_dir=args.data_dir, data_type=DataType.Test,
+                                                max_para_num=args.max_paragraph_num)
         dev_set = ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                      data_type=DataType.Dev, max_para_num=args.max_paragraph_num)
+                                                      data_dir=args.data_dir, data_type=DataType.Dev,
+                                                      max_para_num=args.max_paragraph_num)
         training_set = ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                           data_type=DataType.Train, max_para_num=args.max_paragraph_num)
+                                                           data_dir=args.data_dir, data_type=DataType.Train,
+                                                           max_para_num=args.max_paragraph_num)
     else:
         raise ValueError("args.model should be set properly.")
 
@@ -247,6 +252,7 @@ if __name__ == "__main__":
                         help="The output directory where the model predictions and checkpoints will be written.")
 
     ## Other parameters
+    parser.add_argument("--data_dir", default="data/", type=str, help="root directory for output")
     parser.add_argument("--output_dir", default="output/", type=str, help="root directory for output")
     parser.add_argument("--seed", default=False, type=float, help="floating value for random seed")
     parser.add_argument("--bert_type", default='bert-base-uncased', type=str,
