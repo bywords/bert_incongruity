@@ -34,7 +34,8 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # output setups
-    exp_dir = os.path.join(args.output_dir, args.exp_id)
+    exp_id = "data-{}_model-{}_freeze-{}".format(args.data_dir, args.model, args.freeze)
+    exp_dir = os.path.join(args.output_dir, exp_id)
     if not os.path.exists(exp_dir):
         os.makedirs(exp_dir)
     log_file = os.path.join(exp_dir, "logs.txt")
@@ -245,16 +246,14 @@ if __name__ == "__main__":
     parser.add_argument("--mode", default=None, type=str, required=True,
                         help="mode: train / test")
     parser.add_argument("--model", default=None, type=str, required=True,
-                        help="model: pool / ahde")
+                        help="model: pool / ahde / nsp")
     parser.add_argument("--model_file", default=None, type=str, required=True,
                         help="The input training data file (a text file).")
-    parser.add_argument("--exp_id", default=None, type=str, required=True,
-                        help="The output directory where the model predictions and checkpoints will be written.")
 
     ## Other parameters
-    parser.add_argument("--data_dir", default="data/", type=str, help="root directory for output")
-    parser.add_argument("--output_dir", default="output/", type=str, help="root directory for output")
-    parser.add_argument("--seed", default=False, type=float, help="floating value for random seed")
+    parser.add_argument("--data_dir", default="data", type=str, help="root directory for output")
+    parser.add_argument("--output_dir", default="output", type=str, help="root directory for output")
+    parser.add_argument("--seed", default=1.0, type=float, help="floating value for random seed")
     parser.add_argument("--bert_type", default='bert-base-uncased', type=str,
                         help="bert pretrained model type. e.g., 'bert-base-uncased'")
     parser.add_argument("--freeze", default=False, type=bool, help="whether bert parameters are freezed")
@@ -264,7 +263,8 @@ if __name__ == "__main__":
     parser.add_argument("--num_warmup_steps", default=100, type=int, help="For AdamW Secheduler")
     parser.add_argument("--max_seq_len", default=512, type=int, help="For AdamW Secheduler")
     parser.add_argument("--batch_size", default=64, type=int, help="Batch size")
-    parser.add_argument("--max_epochs", default=4, type=int, help="Number of max epochs for training. btw 2 and 4 are recommended.")
+    parser.add_argument("--max_epochs", default=4, type=int,
+                        help="Number of max epochs for training.")
     parser.add_argument("--max_paragraph_num", default=30, type=int)
     parser.add_argument("--headline-rnn-hidden-dim", default=384, type=int)
     parser.add_argument("--word-level-rnn-hidden-dim", default=384, type=int)
@@ -273,12 +273,3 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     main(args)
-
-
-
-
-
-
-
-
-
