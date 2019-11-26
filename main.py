@@ -86,7 +86,7 @@ def main(args):
                                              data_dir=args.data_dir, data_type=DataType.Dev)
 
         training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                  data_dir=args.data_dir, data_type=DataType.Train_sample)
+                                                  data_dir=args.data_dir, data_type=DataType.Train)
     elif args.model =="ahde":
         test_set = \
             ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
@@ -168,36 +168,36 @@ def main(args):
             model.eval()
             logger.info("Epoch {} - Start Validation".format(e_idx))
 
-            # # Tracking variables
-            # dev_y_preds, dev_y_targets = [], []
-            # # Evaluate data for one epoch
-            # for batch in dev_dataloader:
-            #     # Add batch to GPU
-            #     batch = tuplify_with_device(batch, device)
-            #     # Unpack the inputs from our dataloader
-            #     b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens, \
-            #     b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens, \
-            #     b_labels = batch
-            #     # Telling the model not to compute or store gradients, saving memory and speeding up validation
-            #     with torch.no_grad():
-            #         # Forward pass, calculate logit predictions
-            #         preds = torch.sigmoid(model(b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens,
-            #                                     b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens))
-            #
-            #     # Move logits and labels to CPU
-            #     preds = preds.detach().cpu().numpy()
-            #     label_ids = b_labels.to('cpu').numpy()
-            #
-            #     dev_y_preds.append(preds)
-            #     dev_y_targets.append(label_ids)
-            #
-            # dev_y_preds = np.concatenate(dev_y_preds).reshape((-1, ))
-            # dev_y_targets = np.concatenate(dev_y_targets).reshape((-1, )).astype(int)
-            #
-            # dev_acc = accuracy_score(dev_y_targets, dev_y_preds.round())
-            # dev_auroc = roc_auc_score(dev_y_targets, dev_y_preds)
-            #
-            # logger.info("Epoch {} - Dev Acc: {:.4f} AUROC: {:.4f}".format(e_idx, dev_acc, dev_auroc))
+            # Tracking variables
+            dev_y_preds, dev_y_targets = [], []
+            # Evaluate data for one epoch
+            for batch in dev_dataloader:
+                # Add batch to GPU
+                batch = tuplify_with_device(batch, device)
+                # Unpack the inputs from our dataloader
+                b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens, \
+                b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens, \
+                b_labels = batch
+                # Telling the model not to compute or store gradients, saving memory and speeding up validation
+                with torch.no_grad():
+                    # Forward pass, calculate logit predictions
+                    preds = torch.sigmoid(model(b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens,
+                                                b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens))
+
+                # Move logits and labels to CPU
+                preds = preds.detach().cpu().numpy()
+                label_ids = b_labels.to('cpu').numpy()
+
+                dev_y_preds.append(preds)
+                dev_y_targets.append(label_ids)
+
+            dev_y_preds = np.concatenate(dev_y_preds).reshape((-1, ))
+            dev_y_targets = np.concatenate(dev_y_targets).reshape((-1, )).astype(int)
+
+            dev_acc = accuracy_score(dev_y_targets, dev_y_preds.round())
+            dev_auroc = roc_auc_score(dev_y_targets, dev_y_preds)
+
+            logger.info("Epoch {} - Dev Acc: {:.4f} AUROC: {:.4f}".format(e_idx, dev_acc, dev_auroc))
 
         torch.save(model.state_dict(), model_path)
 
