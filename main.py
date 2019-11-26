@@ -186,9 +186,8 @@ def main(args):
                                                 b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens))
 
                 print(preds[0:5])
-                print(label_ids[0:5])
-                exit()
-
+                print(b_labels[0:5])
+                
                 # Move logits and labels to CPU
                 preds = preds.detach().cpu().numpy()
                 label_ids = b_labels.to('cpu').numpy()
