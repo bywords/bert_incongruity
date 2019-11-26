@@ -233,9 +233,9 @@ def main(args):
     y_preds = np.concatenate(y_preds).reshape((-1, ))
     y_targets = np.concatenate(y_targets).reshape((-1, )).astype(int)
 
-    print(np.argwhere(np.isnan(y_preds)))
-    print(np.argwhere(np.isnan(y_targets)))
-    exit()
+    temp_index = np.isnan(y_preds)
+    y_preds = y_preds[~temp_index]
+    y_targets = y_targets[~temp_index]
 
     acc = accuracy_score(y_targets, y_preds.round())
     auroc = roc_auc_score(y_targets, y_preds)
