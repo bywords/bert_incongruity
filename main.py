@@ -19,14 +19,14 @@ from bert_ahde import AttentionHDE
 # To disable kears warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-def set_seed(args):
+def set_seed(seed):
     n_gpu = torch.cuda.device_count()
 
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
     if n_gpu > 0:
-        torch.cuda.manual_seed_all(args.seed)
+        torch.cuda.manual_seed_all(seed)
 
 
 def main(args):
@@ -257,7 +257,7 @@ if __name__ == "__main__":
     ## Other parameters
     parser.add_argument("--data_dir", default="data", type=str, help="root directory for output")
     parser.add_argument("--output_dir", default="output", type=str, help="root directory for output")
-    parser.add_argument("--seed", default=1.0, type=float, help="floating value for random seed")
+    parser.add_argument("--seed", default=1, type=int, help="integer value for random seed")
     parser.add_argument("--bert_type", default='bert-base-uncased', type=str,
                         help="bert pretrained model type. e.g., 'bert-base-uncased'")
     parser.add_argument("--freeze", default=False, type=bool, help="whether bert parameters are freezed")
