@@ -53,7 +53,7 @@ def main(args):
     logger.addHandler(f_handler)
 
     # Set seed
-    set_seed(args)
+    set_seed(args.seed)
 
     # Number of training epochs (authors recommend between 2 and 4)
     epochs = args.max_epochs
