@@ -5,7 +5,7 @@ import pandas as pd
 
 
 def filter_data(path):
-    df = pd.read_csv(path, sep="\t", header=False)
+    df = pd.read_csv(path, sep="\t", header=None)
 
     filter_func = lambda x: len(x.replace('<EOS>', '').replace('<EOP>', '').strip()) > 0
     new_df = df.loc[df[1].apply(filter_func) & df[2].apply(filter_func)]
