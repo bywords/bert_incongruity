@@ -185,6 +185,10 @@ def main(args):
                     preds = torch.sigmoid(model(b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens,
                                                 b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens))
 
+                print(preds[0:5])
+                print(label_ids[0:5])
+                exit()
+
                 # Move logits and labels to CPU
                 preds = preds.detach().cpu().numpy()
                 label_ids = b_labels.to('cpu').numpy()
