@@ -185,9 +185,6 @@ def main(args):
                     preds = torch.sigmoid(model(b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens,
                                                 b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens))
 
-                print(preds[0:5])
-                print(b_labels[0:5])
-                
                 # Move logits and labels to CPU
                 preds = preds.detach().cpu().numpy()
                 label_ids = b_labels.to('cpu').numpy()
@@ -220,7 +217,7 @@ def main(args):
         # Unpack the inputs from our dataloader
         b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens, \
         b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens, \
-        b_num_paras, b_labels = batch
+        b_labels = batch
         # Telling the model not to compute or store gradients, saving memory and speeding up validation
         with torch.no_grad():
             # Forward pass, calculate logit predictions
