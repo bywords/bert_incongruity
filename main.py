@@ -86,7 +86,7 @@ def main(args):
                                              data_dir=args.data_dir, data_type=DataType.Dev)
 
         training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                  data_dir=args.data_dir, data_type=DataType.Train)
+                                                  data_dir=args.data_dir, data_type=DataType.Train_sample)
     elif args.model =="ahde":
         test_set = \
             ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
