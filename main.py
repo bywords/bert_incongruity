@@ -82,12 +82,12 @@ def main(args):
     if args.model == "pool":
         test_set = \
             IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                       data_dir=args.data_dir, data_type=DataType.Test)
+                                       data_dir=args.data_dir, data_type=DataType.Test_sample)
         dev_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                             data_dir=args.data_dir, data_type=DataType.Dev)
+                                             data_dir=args.data_dir, data_type=DataType.Dev_sample)
 
         training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                  data_dir=args.data_dir, data_type=DataType.Train)
+                                                  data_dir=args.data_dir, data_type=DataType.Train_sample)
     elif args.model =="ahde":
         test_set = \
             ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
