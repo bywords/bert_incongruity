@@ -246,6 +246,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     ## Required parameters
+    parser.add_argument("--data_dir", required=True, type=str, help="root directory for data")
     parser.add_argument("--mode", default=None, type=str, required=True,
                         help="mode: train / test")
     parser.add_argument("--model", default=None, type=str, required=True,
@@ -254,7 +255,6 @@ if __name__ == "__main__":
                         help="The input training data file (a text file).")
 
     ## Other parameters
-    parser.add_argument("--data_dir", default="data", type=str, help="root directory for output")
     parser.add_argument("--output_dir", default="output", type=str, help="root directory for output")
     parser.add_argument("--seed", default=1, type=int, help="integer value for random seed")
     parser.add_argument("--bert_type", default='bert-base-uncased', type=str,
