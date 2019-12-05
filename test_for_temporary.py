@@ -38,7 +38,7 @@ def main(args):
     exp_dir = os.path.join(args.output_dir, exp_id)
     if not os.path.exists(exp_dir):
         os.makedirs(exp_dir)
-    log_file = os.path.join(exp_dir, "logs.txt")
+    log_file = os.path.join(exp_dir, "logs-each-type.txt")
     model_path = os.path.join(exp_dir, "model.pt")
 
     # Setup logging
@@ -65,7 +65,7 @@ def main(args):
     else:
         model.unfreeze_bert_encoder()
 
-    model = model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_path))
 
     for data_type in [DataType.Test_0, DataType.Test_1, DataType.Test_2, DataType.Test_3]:
         test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
