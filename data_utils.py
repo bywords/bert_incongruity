@@ -23,6 +23,7 @@ class DataType(enum.Enum):
    Train_sample = 8
    Dev_sample = 9
    Test_sample = 10
+   Test_real = 11
 
 
 class IncongruityDataset(Dataset):
@@ -49,6 +50,8 @@ class IncongruityDataset(Dataset):
             path = os.path.join("data", "dev_sample.tsv")
         elif data_type == DataType.Test_sample:
             path = os.path.join("data", "test_sample.tsv")
+        elif data_type == DataType.Test_real:
+            path = os.path.join("data", "real_world_articles_ascii.tsv")
         else:
             raise TypeError("data_type should be DataType class.")
 
@@ -148,6 +151,8 @@ class IncongruityIterableDataset(IterableDataset):
             path = os.path.join(data_dir, "dev_sample.tsv")
         elif data_type == DataType.Test_sample:
             path = os.path.join(data_dir, "test_sample.tsv")
+        elif data_type == DataType.Test_real:
+            path = os.path.join("data", "real_world_articles_ascii.tsv")
         else:
             raise TypeError("data_type should be DataType class.")
 
