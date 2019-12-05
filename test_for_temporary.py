@@ -68,43 +68,43 @@ def main(args):
 
     model.load_state_dict(torch.load(model_path))
 
-    for data_type in [DataType.Test_0, DataType.Test_1, DataType.Test_2, DataType.Test_3]:
-        test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                              data_dir=args.data_dir, data_type=data_type)
-        test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
-
-        # Evaluate test data for one epoch
-        y_targets, y_preds = [], []
-        for batch in test_dataloader:
-            # Add batch to GPU
-            batch = tuplify_with_device(batch, device)
-            # Unpack the inputs from our dataloader
-            b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens, \
-            b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens, \
-            b_labels = batch
-            # Telling the model not to compute or store gradients, saving memory and speeding up validation
-            with torch.no_grad():
-                # Forward pass, calculate logit predictions
-                preds = torch.sigmoid(model(b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens,
-                                            b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens))
-
-            # Move logits and labels to CPU
-            preds = preds.detach().cpu().numpy()
-            label_ids = b_labels.to('cpu').numpy()
-
-            y_preds.append(preds)
-            y_targets.append(label_ids)
-
-        y_preds = np.concatenate(y_preds).reshape((-1, ))
-        y_targets = np.concatenate(y_targets).reshape((-1, )).astype(int)
-
-        temp_index = np.isnan(y_preds)
-        y_preds = y_preds[~temp_index]
-        y_targets = y_targets[~temp_index]
-
-        acc = accuracy_score(y_targets, y_preds.round())
-        auroc = roc_auc_score(y_targets, y_preds)
-        logger.info("Type: {}, Test Accuracy: {:.4f}, AUROC: {:.4f}".format(data_type, acc, auroc))
+    # for data_type in [DataType.Test_0, DataType.Test_1, DataType.Test_2, DataType.Test_3]:
+    #     test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+    #                                           data_dir=args.data_dir, data_type=data_type)
+    #     test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
+    #
+    #     # Evaluate test data for one epoch
+    #     y_targets, y_preds = [], []
+    #     for batch in test_dataloader:
+    #         # Add batch to GPU
+    #         batch = tuplify_with_device(batch, device)
+    #         # Unpack the inputs from our dataloader
+    #         b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens, \
+    #         b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens, \
+    #         b_labels = batch
+    #         # Telling the model not to compute or store gradients, saving memory and speeding up validation
+    #         with torch.no_grad():
+    #             # Forward pass, calculate logit predictions
+    #             preds = torch.sigmoid(model(b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens,
+    #                                         b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens))
+    #
+    #         # Move logits and labels to CPU
+    #         preds = preds.detach().cpu().numpy()
+    #         label_ids = b_labels.to('cpu').numpy()
+    #
+    #         y_preds.append(preds)
+    #         y_targets.append(label_ids)
+    #
+    #     y_preds = np.concatenate(y_preds).reshape((-1, ))
+    #     y_targets = np.concatenate(y_targets).reshape((-1, )).astype(int)
+    #
+    #     temp_index = np.isnan(y_preds)
+    #     y_preds = y_preds[~temp_index]
+    #     y_targets = y_targets[~temp_index]
+    #
+    #     acc = accuracy_score(y_targets, y_preds.round())
+    #     auroc = roc_auc_score(y_targets, y_preds)
+    #     logger.info("Type: {}, Test Accuracy: {:.4f}, AUROC: {:.4f}".format(data_type, acc, auroc))
 
 
     for data_type in [DataType.Test_real]:
