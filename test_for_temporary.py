@@ -57,17 +57,7 @@ def main(args):
 
     tokenizer = BertTokenizer.from_pretrained(args.bert_type, do_lower_case=True)
 
-    if args.model == "pool":
-        model = BertPoolForIncongruity(args.bert_type, hidden_size=bert_dim(args.bert_type))
-    elif args.model == "ahde":
-        hidden_dims = \
-            {'headline': args.headline_rnn_hidden_dim,
-            'word': args.word_level_rnn_hidden_dim,
-            'paragraph': args.word_level_rnn_hidden_dim
-        }
-        model = AttentionHDE(args.bert_type, hidden_dims, args.max_paragraph_num)
-    else:
-        raise ValueError("args.model should be set appropriately.")
+    model = BertPoolForIncongruity(args.bert_type, hidden_size=bert_dim(args.bert_type))
     model.cuda()
 
     if args.freeze:
