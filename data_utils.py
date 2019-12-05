@@ -163,7 +163,7 @@ class IncongruityIterableDataset(IterableDataset):
     def __iter__(self):
 
         # Create an iterator
-        file_itr = open(self.path)
+        file_itr = open(self.path, encoding="utf-8")
 
         # Map each element using the line_mapper
         mapped_itr = map(self.line_mapper, file_itr)
