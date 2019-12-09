@@ -39,7 +39,6 @@ def main(args):
     if not os.path.exists(exp_dir):
         os.makedirs(exp_dir)
     log_file = os.path.join(exp_dir, "logs-each-type.txt")
-    real_output_file = os.path.join(exp_dir, "BDE.txt")
     model_path = os.path.join(exp_dir, "model.pt")
 
     # Setup logging
@@ -107,7 +106,7 @@ def main(args):
     #     logger.info("Type: {}, Test Accuracy: {:.4f}, AUROC: {:.4f}".format(data_type, acc, auroc))
 
 
-    for data_type in [DataType.Test_real]:
+    for data_type in [DataType.Test_0, DataType.Test_1, DataType.Test_2, DataType.Test_3]:
         test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
                                               data_dir=args.data_dir, data_type=data_type)
         test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
@@ -136,6 +135,7 @@ def main(args):
         temp_index = np.isnan(y_preds)
         y_preds = y_preds[~temp_index]
 
+        real_output_file = os.path.join(exp_dir, "{}.txt".format(data_type))
         with open(real_output_file, 'wt') as f:
             for idx, pred in enumerate(y_preds):
                 print(idx, end=",", file=f)
