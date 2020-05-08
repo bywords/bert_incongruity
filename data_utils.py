@@ -127,6 +127,62 @@ class IncongruityDataset(Dataset):
                target_bodytext_mask, target_bodytext_pooling_mask, target_label
 
 
+class NSP_IncongruityIterableDataset(IterableDataset):
+    'Characterizes an Iterabledataset for PyTorch'
+    def __init__(self, tokenizer, max_seq_len, data_dir, data_type):
+        'Initialization'
+        if data_type == DataType.Train:
+            path = os.path.join(data_dir, "train.tsv")
+        elif data_type == DataType.Dev:
+            path = os.path.join(data_dir, "dev.tsv")
+        elif data_type == DataType.Test:
+            path = os.path.join(data_dir, "test.tsv")
+        elif data_type == DataType.Test_0:
+            path = os.path.join(data_dir, "test_type_0.tsv")
+        elif data_type == DataType.Test_1:
+            path = os.path.join(data_dir, "test_type_1.tsv")
+        elif data_type == DataType.Test_2:
+            path = os.path.join(data_dir, "test_type_2.tsv")
+        elif data_type == DataType.Test_3:
+            path = os.path.join(data_dir, "test_type_3.tsv")
+        elif data_type == DataType.Train_sample:
+            path = os.path.join(data_dir, "train_sample.tsv")
+        elif data_type == DataType.Dev_sample:
+            path = os.path.join(data_dir, "dev_sample.tsv")
+        elif data_type == DataType.Test_sample:
+            path = os.path.join(data_dir, "test_sample.tsv")
+        elif data_type == DataType.Test_real:
+            path = os.path.join(data_dir, "real_world_articles_ascii.tsv")
+        else:
+            raise TypeError("data_type should be DataType class.")
+
+        self.path = path
+        self.tokenizer = tokenizer
+        self.max_seq_len = max_seq_len
+
+    def __iter__(self):
+
+        # Create an iterator
+        file_itr = open(self.path, encoding="utf-8")
+
+        # Map each element using the line_mapper
+        mapped_itr = map(self.line_mapper, file_itr)
+
+        return mapped_itr
+
+    def line_mapper(self, line):
+        # Splits the line into text and label and applies preprocessing to the text
+        df = pd.read_csv(StringIO(line), sep="\t", header=None)
+        indexed_tokens, segment_masks, label = self.preprocess(df.iloc[0, 1], df.iloc[0, 2], df.iloc[0, 3])
+
+        return indexed_tokens, segment_masks, label
+
+    def preprocess(self, headline, bodytext, label):
+        indexed_tokens, segment_masks = pad_and_mask_for_bert_nsp(bodytext, headline, self.tokenizer)
+
+        return indexed_tokens, segment_masks, label
+
+
 class IncongruityIterableDataset(IterableDataset):
     'Characterizes an Iterabledataset for PyTorch'
     def __init__(self, tokenizer, max_seq_len, data_dir, data_type):
@@ -301,6 +357,12 @@ def tuplify_with_device(batch, device):
                   batch[8].to(device, dtype=torch.float)])
 
 
+def tuplify_with_device_for_nsp(batch, device):
+    return tuple([batch[0].to(device, dtype=torch.long),
+                  batch[1].to(device, dtype=torch.long),
+                  batch[2].to(device, dtype=torch.float)])
+
+
 def bert_dim(bert_model):
     if bert_model == "bert-base-uncased":
         dim = 768
@@ -328,3 +390,14 @@ def pad_and_mask_for_bert_emb(text, tokenizer, max_seq_len):
     mask = np.array(mask)
 
     return text, mask, pool_mask, text_len
+
+
+def pad_and_mask_for_bert_nsp(text1, text2, tokenizer):
+
+    text1_toks = ["[CLS]"] + tokenizer.tokenize(text1)[:450] + ["[SEP]"]
+    text2_toks = tokenizer.tokenize(text2)[:60]
+
+    indexed_tokens = tokenizer.convert_tokens_to_ids(text1_toks + text2_toks)
+    segments_ids = [0] * len(text1_toks) + [1] * len(text2_toks)
+
+    return indexed_tokens, segments_ids
