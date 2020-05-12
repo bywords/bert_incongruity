@@ -334,7 +334,7 @@ def pad_and_mask_for_bert_nsp(text1, text2, tokenizer, max_seq_len):
     text1_toks = ["[CLS]"] + tokenizer.tokenize(text1)[:BODYTEXT_MAX_LEN] + ["[SEP]"]
     text2_toks = tokenizer.tokenize(text2)[:HEADLINE_MAX_LEN]
     indexed_tokens = [tokenizer.convert_tokens_to_ids(x) for x in text1_toks + text2_toks]
-    indexed_tokens = pad_sequences(max_seq_len, maxlen=len(indexed_tokens),
+    indexed_tokens = pad_sequences(indexed_tokens, maxlen=max_seq_len,
                                    dtype="long", truncating="post", padding="post")[0, :]
 
     text1_len = len(text1_toks); text2_len = len(text2_toks); padded_len = max_seq_len - text1_len - text2_len

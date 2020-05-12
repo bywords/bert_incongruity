@@ -164,7 +164,7 @@ def main(args):
 
     elif args.mode == "test":
         nsp_model = BertForNextSentencePrediction.from_pretrained(model_path)
-        
+
     else:
         logging.error("Wrong mode: {}".format(args.mode))
         raise TypeError("args.model should be train or test.")
