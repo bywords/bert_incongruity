@@ -408,8 +408,11 @@ def pad_and_mask_for_bert_nsp(text1, text2, tokenizer):
 
     text1_toks = ["[CLS]"] + tokenizer.tokenize(text1)[:450] + ["[SEP]"]
     text2_toks = tokenizer.tokenize(text2)[:60]
-
     indexed_tokens = [tokenizer.convert_tokens_to_ids(x) for x in text1_toks + text2_toks]
+    indexed_tokens = \
+        pad_sequences([indexed_tokens], maxlen=len(indexed_tokens),
+                      dtype="long", truncating="post", padding="post")[0, :]
+
     segments_ids = [0] * len(text1_toks) + [1] * len(text2_toks)
     segments_ids = np.array(segments_ids).reshape(-1, 1)
 
