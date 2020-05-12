@@ -32,13 +32,12 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # output setups
-    exp_id = "data-{}_bertNSP_seed-{}".format(args.data_dir, args.model, args.seed)
+    exp_id = "data-bertNSPfreeze_seed-{}".format(args.data_dir, args.seed)
 
     exp_dir = os.path.join(args.output_dir, exp_id)
     if not os.path.exists(exp_dir):
         os.makedirs(exp_dir)
     log_file = os.path.join(exp_dir, "logs.txt")
-    model_path = os.path.join(exp_dir, args.model_file)
 
     # Setup logging
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
