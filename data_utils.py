@@ -172,14 +172,20 @@ class NSP_IncongruityIterableDataset(IterableDataset):
 
     def line_mapper(self, line):
         # Splits the line into text and label and applies preprocessing to the text
-        df = pd.read_csv(StringIO(line), sep="\t", header=None, quoting=csv.QUOTE_NONE)
-        print(line) # for debugging
+        try:
+            df = pd.read_csv(StringIO(line), sep="\t", header=None, quoting=csv.QUOTE_NONE)
+        except:
+            print(line)
+            exit()
+
         indexed_tokens, segment_masks, label = self.preprocess(df.iloc[0, 1], df.iloc[0, 2], df.iloc[0, 3])
 
         return indexed_tokens, segment_masks, label
 
     def preprocess(self, headline, bodytext, label):
         indexed_tokens, segment_masks = pad_and_mask_for_bert_nsp(bodytext, headline, self.tokenizer)
+
+        label = np.array(label).reshape(-1, 1)
 
         return indexed_tokens, segment_masks, label
 
@@ -403,7 +409,8 @@ def pad_and_mask_for_bert_nsp(text1, text2, tokenizer):
     text1_toks = ["[CLS]"] + tokenizer.tokenize(text1)[:450] + ["[SEP]"]
     text2_toks = tokenizer.tokenize(text2)[:60]
 
-    indexed_tokens = tokenizer.convert_tokens_to_ids(text1_toks + text2_toks)
+    indexed_tokens = [tokenizer.convert_tokens_to_ids(x) for x in text1_toks + text2_toks]
     segments_ids = [0] * len(text1_toks) + [1] * len(text2_toks)
+    segments_ids = np.array(segments_ids).reshape(-1, 1)
 
     return indexed_tokens, segments_ids
