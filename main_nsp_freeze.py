@@ -10,7 +10,7 @@ from torch.utils import data
 from sklearn.metrics import accuracy_score, roc_auc_score
 from transformers import BertTokenizer, BertForNextSentencePrediction
 
-from data_utils import NSP_IncongruityIterableDataset, DataType, tuplify_with_device_for_nsp
+from data_utils import NSP_IncongruityIterableDataset, DataType, tuplify_with_device_for_nsp, str2bool
 
 
 # To disable kears warnings
@@ -59,8 +59,12 @@ def main(args):
     nsp_model.cuda()
 
     # cannot shuffle with iterable dataset
-    test_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                              data_dir=args.data_dir, data_type=DataType.Test)
+    if args.sample_train:
+        test_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                                  data_dir=args.data_dir, data_type=DataType.Test_sample)
+    else:
+        test_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                                  data_dir=args.data_dir, data_type=DataType.Test)
     test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
 
     nsp_model.eval()
@@ -112,6 +116,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", default=64, type=int, help="Batch size")
     parser.add_argument("--max_paragraph_num", default=30, type=int)
     parser.add_argument("--gpu_id", default=2, type=int, help="cuda device index")
+    parser.add_argument("--sample_train", default=False, type=str2bool, help="whether to sample a train file")
 
     args = parser.parse_args()
     main(args)
