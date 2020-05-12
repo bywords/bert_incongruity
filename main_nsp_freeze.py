@@ -105,9 +105,7 @@ if __name__ == "__main__":
 
     ## Required parameters
     parser.add_argument("--data_dir", required=True, type=str, help="root directory for data")
-    parser.add_argument("--model_file", default=None, type=str, required=True,
-                        help="The input training data file (a text file).")
-
+    
     ## Other parameters
     parser.add_argument("--output_dir", default="output", type=str, help="root directory for output")
     parser.add_argument("--seed", default=1, type=int, help="integer value for random seed")
