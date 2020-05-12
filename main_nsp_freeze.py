@@ -9,7 +9,7 @@ import logging
 from torch import nn
 from torch.utils import data
 from sklearn.metrics import accuracy_score, roc_auc_score
-from transformers import BertTokenizer, AdamW, WarmupLinearSchedule, BertForNextSentencePrediction
+from transformers import BertTokenizer, AdamW, BertForNextSentencePrediction
 
 from data_utils import NSP_IncongruityIterableDataset, DataType, tuplify_with_device_for_nsp
 
