@@ -229,7 +229,12 @@ class IncongruityIterableDataset(IterableDataset):
 
     def line_mapper(self, line):
         # Splits the line into text and label and applies preprocessing to the text
-        df = pd.read_csv(StringIO(line), sep="\t", header=None, engine="python")
+        try:
+            df = pd.read_csv(StringIO(line), sep="\t", header=None, engine="python")
+        except:
+            print(line)
+            exit()
+            
         headline, h_mask, h_pool_mask, h_len, bodytext, b_mask, b_pool_mask, b_len, label = \
             self.preprocess(df.iloc[0, 1], df.iloc[0, 2], df.iloc[0, 3])
 
