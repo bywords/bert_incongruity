@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-import os
+import os, csv
 import numpy as np
 import enum
 import torch
@@ -172,7 +172,7 @@ class NSP_IncongruityIterableDataset(IterableDataset):
 
     def line_mapper(self, line):
         # Splits the line into text and label and applies preprocessing to the text
-        df = pd.read_csv(StringIO(line), sep="\t", header=None, engine="python")
+        df = pd.read_csv(StringIO(line), sep="\t", header=None, quoting=csv.QUOTE_NONE)
         print(line) # for debugging
         indexed_tokens, segment_masks, label = self.preprocess(df.iloc[0, 1], df.iloc[0, 2], df.iloc[0, 3])
 
@@ -230,11 +230,11 @@ class IncongruityIterableDataset(IterableDataset):
     def line_mapper(self, line):
         # Splits the line into text and label and applies preprocessing to the text
         try:
-            df = pd.read_csv(StringIO(line), sep="\t", header=None, engine="python")
+            df = pd.read_csv(StringIO(line), sep="\t", header=None, quoting=csv.QUOTE_NONE)
         except:
             print(line)
             exit()
-            
+
         headline, h_mask, h_pool_mask, h_len, bodytext, b_mask, b_pool_mask, b_len, label = \
             self.preprocess(df.iloc[0, 1], df.iloc[0, 2], df.iloc[0, 3])
 
