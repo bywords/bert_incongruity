@@ -58,7 +58,11 @@ def main(args):
 
     # Number of training epochs (authors recommend between 2 and 4)
     epochs = args.max_epochs
-    tokenizer = BertTokenizer.from_pretrained(args.bert_type, do_lower_case=True)
+    if "uncased" in args.bert_type:
+        tokenizer = BertTokenizer.from_pretrained(args.bert_type, do_lower_case=True)
+    else:
+        tokenizer = BertTokenizer.from_pretrained(args.bert_type, do_lower_case=False)
+
 
     if args.model == "pool":
         model = BertPoolForIncongruity(args.bert_type, hidden_size=bert_dim(args.bert_type))
@@ -79,31 +83,13 @@ def main(args):
         model.unfreeze_bert_encoder()
 
     # cannot shuffle with iterable dataset
-    if args.model == "pool":
-        test_set = \
-            IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                       data_dir=args.data_dir, data_type=DataType.Test,
-                                       bert_type=args.bert_type)
-        dev_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                             data_dir=args.data_dir, data_type=DataType.Dev,
-                                             bert_type=args.bert_type)
+    test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                       data_dir=args.data_dir, data_type=DataType.Test)
+    dev_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                         data_dir=args.data_dir, data_type=DataType.Dev)
 
-        training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                  data_dir=args.data_dir, data_type=DataType.Train,
-                                                  bert_type=args.bert_type)
-    elif args.model =="ahde":
-        test_set = \
-            ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                data_dir=args.data_dir, data_type=DataType.Test,
-                                                max_para_num=args.max_paragraph_num)
-        dev_set = ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                      data_dir=args.data_dir, data_type=DataType.Dev,
-                                                      max_para_num=args.max_paragraph_num)
-        training_set = ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                           data_dir=args.data_dir, data_type=DataType.Train,
-                                                           max_para_num=args.max_paragraph_num)
-    else:
-        raise ValueError("args.model should be set properly.")
+    training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                                  data_dir=args.data_dir, data_type=DataType.Train)
 
     test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
 

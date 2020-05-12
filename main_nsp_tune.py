@@ -54,12 +54,14 @@ def main(args):
     # Set seed
     set_seed(args.seed)
 
-    # Number of training epochs (authors recommend between 2 and 4)
-    tokenizer = BertTokenizer.from_pretrained(args.bert_type, do_lower_case=True)
+    if "uncased" in args.bert_type:
+        tokenizer = BertTokenizer.from_pretrained(args.bert_type, do_lower_case=True)
+    else:
+        tokenizer = BertTokenizer.from_pretrained(args.bert_type, do_lower_case=False)
+
     # cannot shuffle with iterable dataset
     test_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                              data_dir=args.data_dir, data_type=DataType.Test,
-                                              bert_type=args.bert_type)
+                                              data_dir=args.data_dir, data_type=DataType.Test)
     test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
 
     if args.mode == "train":
@@ -67,12 +69,10 @@ def main(args):
         nsp_model = BertForNextSentencePrediction.from_pretrained(args.bert_type)
 
         training_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                      data_dir=args.data_dir, data_type=DataType.Train,
-                                                      bert_type=args.bert_type)
+                                                      data_dir=args.data_dir, data_type=DataType.Train)
         train_dataloader = data.DataLoader(training_set, batch_size=args.batch_size)
         dev_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                 data_dir=args.data_dir, data_type=DataType.Dev,
-                                                 bert_type=args.bert_type)
+                                                 data_dir=args.data_dir, data_type=DataType.Dev)
         dev_dataloader = data.DataLoader(dev_set, batch_size=args.batch_size)
 
         # Define optimizers

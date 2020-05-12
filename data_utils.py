@@ -30,7 +30,7 @@ class DataType(enum.Enum):
 
 class NSP_IncongruityIterableDataset(IterableDataset):
     'Characterizes an Iterabledataset for PyTorch'
-    def __init__(self, tokenizer, max_seq_len, data_dir, data_type, bert_type):
+    def __init__(self, tokenizer, max_seq_len, data_dir, data_type):
         'Initialization'
         if data_type == DataType.Train:
             path = os.path.join(data_dir, "train.tsv")
@@ -60,7 +60,6 @@ class NSP_IncongruityIterableDataset(IterableDataset):
         self.path = path
         self.tokenizer = tokenizer
         self.max_seq_len = max_seq_len
-        self.bert_type = bert_type
 
     def __iter__(self):
 
@@ -80,12 +79,8 @@ class NSP_IncongruityIterableDataset(IterableDataset):
             print(line)
             exit()
 
-        if "uncased" in self.bert_type:
-            raw_headline = df.iloc[0, 1].lower()
-            raw_bodytext = df.iloc[0, 2].lower()
-        else:
-            raw_headline = df.iloc[0, 1]
-            raw_bodytext = df.iloc[0, 2]
+        raw_headline = df.iloc[0, 1]
+        raw_bodytext = df.iloc[0, 2]
         raw_label = df.iloc[0, 3]
 
         indexed_tokens, attention_masks, segment_ids, label = \
@@ -103,7 +98,7 @@ class NSP_IncongruityIterableDataset(IterableDataset):
 
 class IncongruityIterableDataset(IterableDataset):
     'Characterizes an Iterabledataset for PyTorch'
-    def __init__(self, tokenizer, max_seq_len, data_dir, data_type, bert_type):
+    def __init__(self, tokenizer, max_seq_len, data_dir, data_type):
         'Initialization'
         if data_type == DataType.Train:
             path = os.path.join(data_dir, "train.tsv")
@@ -133,7 +128,6 @@ class IncongruityIterableDataset(IterableDataset):
         self.path = path
         self.tokenizer = tokenizer
         self.max_seq_len = max_seq_len
-        self.bert_type = bert_type
 
     def __iter__(self):
 
@@ -153,14 +147,9 @@ class IncongruityIterableDataset(IterableDataset):
             print(line)
             exit()
 
-        if "uncased" in self.bert_type:
-            raw_headline = df.iloc[0, 1].lower()
-            raw_bodytext = df.iloc[0, 2].lower()
-        else:
-            raw_headline = df.iloc[0, 1]
-            raw_bodytext = df.iloc[0, 2]
+        raw_headline = df.iloc[0, 1]
+        raw_bodytext = df.iloc[0, 2]
         raw_label = df.iloc[0, 3]
-
 
         headline, h_mask, h_pool_mask, h_len, bodytext, b_mask, b_pool_mask, b_len, label = \
             self.preprocess(raw_headline, raw_bodytext, raw_label)
