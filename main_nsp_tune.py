@@ -28,6 +28,7 @@ def set_seed(seed):
 
 
 def main(args):
+    ## add model checkpoints
     torch.cuda.set_device(args.gpu_id)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
