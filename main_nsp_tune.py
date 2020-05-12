@@ -67,6 +67,7 @@ def main(args):
     if args.mode == "train":
         epochs = args.max_epochs
         nsp_model = BertForNextSentencePrediction.from_pretrained(args.bert_type)
+        nsp_model.cuda()
 
         training_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
                                                       data_dir=args.data_dir, data_type=DataType.Train)
@@ -164,6 +165,7 @@ def main(args):
 
     elif args.mode == "test":
         nsp_model = BertForNextSentencePrediction.from_pretrained(model_path)
+        nsp_model.cuda()
 
     else:
         logging.error("Wrong mode: {}".format(args.mode))
