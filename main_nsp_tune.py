@@ -28,7 +28,6 @@ def set_seed(seed):
 
 
 def main(args):
-    ## add model checkpoints
     torch.cuda.set_device(args.gpu_id)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -45,7 +44,7 @@ def main(args):
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
                         level=logging.INFO)
-    logger = logging.getLogger("bert_nsp_incongruity")
+    logger = logging.getLogger(exp_id)
 
     f_handler = logging.FileHandler(log_file)
     f_handler.setLevel(logging.INFO)
@@ -57,111 +56,118 @@ def main(args):
 
     # Number of training epochs (authors recommend between 2 and 4)
     tokenizer = BertTokenizer.from_pretrained(args.bert_type, do_lower_case=True)
-    epochs = args.max_epochs
-    nsp_model = BertForNextSentencePrediction.from_pretrained(args.bert_type)
-
     # cannot shuffle with iterable dataset
     test_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                              data_dir=args.data_dir, data_type=DataType.Test)
-    dev_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                         data_dir=args.data_dir, data_type=DataType.Dev)
-
-    training_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                              data_dir=args.data_dir, data_type=DataType.Train)
-
+                                              data_dir=args.data_dir, data_type=DataType.Test,
+                                              bert_type=args.bert_type)
     test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
 
+    if args.mode == "train":
+        epochs = args.max_epochs
+        nsp_model = BertForNextSentencePrediction.from_pretrained(args.bert_type)
 
-    # tokenizer, max_seq_len, filename
-    train_dataloader = data.DataLoader(training_set, batch_size=args.batch_size)
-    dev_dataloader = data.DataLoader(dev_set, batch_size=args.batch_size)
+        training_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                                      data_dir=args.data_dir, data_type=DataType.Train,
+                                                      bert_type=args.bert_type)
+        train_dataloader = data.DataLoader(training_set, batch_size=args.batch_size)
+        dev_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                                 data_dir=args.data_dir, data_type=DataType.Dev,
+                                                 bert_type=args.bert_type)
+        dev_dataloader = data.DataLoader(dev_set, batch_size=args.batch_size)
 
+        # Define optimizers
+        optimizer = AdamW(nsp_model.parameters(), lr=args.learning_rate,
+                          correct_bias=False)  # To reproduce BertAdam specific behavior set correct_bias=False
+        scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=args.num_warmup_steps,
+                                                    num_training_steps=args.num_total_steps)
+        train_loss_set = []
+        for e_idx in range(1, epochs + 1):
 
-    # Define optimizers
-    optimizer = AdamW(nsp_model.parameters(), lr=args.learning_rate,
-                      correct_bias=False)  # To reproduce BertAdam specific behavior set correct_bias=False
-    scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=args.num_warmup_steps,
-                                                num_training_steps=args.num_total_steps)
-    loss_fct = nn.BCEWithLogitsLoss()
-    train_loss_set = []
+            logger.info("Epoch {} - Start Training".format(e_idx))
 
-    # trange is a tqdm wrapper around the normal python range
-    for e_idx in range(1, epochs + 1):
+            # Set our model to training mode (as opposed to evaluation mode)
+            nsp_model.train()
 
-        logger.info("Epoch {} - Start Training".format(e_idx))
+            # Tracking variables
+            tr_loss = 0
+            nb_tr_examples, nb_tr_steps = 0, 0
 
-        # Set our model to training mode (as opposed to evaluation mode)
-        nsp_model.train()
+            # Train the data for one epoch
+            for step, batch in enumerate(train_dataloader):
+                if step % 10 == 0:
+                    logger.info("Epoch {} - Iteration {}".format(e_idx, step * args.batch_size))
+                # Add batch to GPU
+                batch = tuplify_with_device_for_nsp(batch, device)
+                # Unpack the inputs from our dataloader
+                b_indexed_tokens, b_attention_masks, b_segments_ids, b_labels = batch
+                # Clear out the gradients (by default they accumulate)
+                optimizer.zero_grad()
 
-        # Tracking variables
-        tr_loss = 0
-        nb_tr_examples, nb_tr_steps = 0, 0
+                # Forward pass
+                loss, _ = nsp_model(b_indexed_tokens, attention_mask=b_attention_masks,
+                                    token_type_ids=b_segments_ids, next_sentence_label=b_labels)
+                train_loss_set.append(loss.item())
 
-        # Train the data for one epoch
-        for step, batch in enumerate(train_dataloader):
-            if step % 10 == 0:
-                logger.info("Epoch {} - Iteration {}".format(e_idx, step * args.batch_size))
-            # Add batch to GPU
-            batch = tuplify_with_device_for_nsp(batch, device)
-            # Unpack the inputs from our dataloader
-            b_indexed_tokens, b_segments_tensors, b_labels = batch
-            # Clear out the gradients (by default they accumulate)
-            optimizer.zero_grad()
+                # Backward pass
+                loss.backward()
 
-            # Forward pass
-            loss, _ = nsp_model(b_indexed_tokens, token_type_ids=b_segments_tensors, next_sentence_label=b_labels)
-            train_loss_set.append(loss.item())
+                # Update parameters and take a step using the computed gradient
+                nn.utils.clip_grad_norm_(nsp_model.parameters(), args.max_grad_norm)
+                optimizer.step()
+                scheduler.step()
 
-            # Backward pass
-            loss.backward()
+                # Update tracking variables
+                tr_loss += loss.item()
+                nb_tr_examples += b_indexed_tokens.size(0)
+                nb_tr_steps += 1
 
-            # Update parameters and take a step using the computed gradient
-            nn.utils.clip_grad_norm_(nsp_model.parameters(), args.max_grad_norm)
-            optimizer.step()
-            scheduler.step()
+            logger.info("Epoch {} - Train loss: {:.4f}".format(e_idx, tr_loss / nb_tr_steps))
 
-            # Update tracking variables
-            tr_loss += loss.item()
-            nb_tr_examples += b_indexed_tokens.size(0)
-            nb_tr_steps += 1
+            # Validation
 
-        logger.info("Epoch {} - Train loss: {:.4f}".format(e_idx, tr_loss / nb_tr_steps))
+            # Put model in evaluation mode to evaluate loss on the validation set
+            nsp_model.eval()
+            logger.info("Epoch {} - Start Validation".format(e_idx))
 
-        # Validation
+            # Tracking variables
+            dev_y_preds, dev_y_targets = [], []
+            # Evaluate data for one epoch
+            for batch in dev_dataloader:
+                # Add batch to GPU
+                batch = tuplify_with_device_for_nsp(batch, device)
+                # Unpack the inputs from our dataloader
+                b_indexed_tokens, b_attention_masks, b_segment_ids, b_labels = batch
+                # Telling the model not to compute or store gradients, saving memory and speeding up validation
+                with torch.no_grad():
+                    # Forward pass, calculate logit predictions
+                    loss, predictions = nsp_model(b_indexed_tokens, attention_mask=b_attention_masks,
+                                                  token_type_ids=b_segment_ids, next_sentence_label=b_labels)
+                    softmax = torch.nn.Softmax(dim=1)
+                    predictions_sm = softmax(predictions)
 
-        # Put model in evaluation mode to evaluate loss on the validation set
-        nsp_model.eval()
-        logger.info("Epoch {} - Start Validation".format(e_idx))
+                # Move logits and labels to CPU
+                preds = predictions_sm.detach().cpu().numpy()
+                label_ids = b_labels.to('cpu').numpy()
 
-        # Tracking variables
-        dev_y_preds, dev_y_targets = [], []
-        # Evaluate data for one epoch
-        for batch in dev_dataloader:
-            # Add batch to GPU
-            batch = tuplify_with_device_for_nsp(batch, device)
-            # Unpack the inputs from our dataloader
-            b_indexed_tokens, b_segments_tensors, b_labels = batch
-            # Telling the model not to compute or store gradients, saving memory and speeding up validation
-            with torch.no_grad():
-                # Forward pass, calculate logit predictions
-                loss, predictions = nsp_model(b_indexed_tokens, token_type_ids=b_segments_tensors, next_sentence_label=b_labels)
-                softmax = torch.nn.Softmax(dim=1)
-                predictions_sm = softmax(predictions)
+                dev_y_preds.append(preds)
+                dev_y_targets.append(label_ids)
 
-            # Move logits and labels to CPU
-            preds = predictions_sm.detach().cpu().numpy()
-            label_ids = b_labels.to('cpu').numpy()
+            dev_y_preds = np.concatenate(dev_y_preds).reshape((-1,))
+            dev_y_targets = np.concatenate(dev_y_targets).reshape((-1,)).astype(int)
 
-            dev_y_preds.append(preds)
-            dev_y_targets.append(label_ids)
+            dev_acc = accuracy_score(dev_y_targets, dev_y_preds.round())
+            dev_auroc = roc_auc_score(dev_y_targets, dev_y_preds)
 
-        dev_y_preds = np.concatenate(dev_y_preds).reshape((-1,))
-        dev_y_targets = np.concatenate(dev_y_targets).reshape((-1,)).astype(int)
+            logger.info("Epoch {} - Dev Acc: {:.4f} AUROC: {:.4f}".format(e_idx, dev_acc, dev_auroc))
 
-        dev_acc = accuracy_score(dev_y_targets, dev_y_preds.round())
-        dev_auroc = roc_auc_score(dev_y_targets, dev_y_preds)
+        torch.save(nsp_model.state_dict(), model_path)
 
-        logger.info("Epoch {} - Dev Acc: {:.4f} AUROC: {:.4f}".format(e_idx, dev_acc, dev_auroc))
+    elif args.mode == "test":
+        nsp_model = BertForNextSentencePrediction.from_pretrained(model_path)
+        
+    else:
+        logging.error("Wrong mode: {}".format(args.mode))
+        raise TypeError("args.model should be train or test.")
 
     nsp_model.eval()
 
@@ -171,13 +177,10 @@ def main(args):
         # Add batch to GPU
         batch = tuplify_with_device_for_nsp(batch, device)
         # Unpack the inputs from our dataloader
-        b_tokens, b_segments_ids, b_labels = batch
-
-        tokens_tensor = torch.tensor([b_tokens])
-        segments_tensors = torch.tensor([b_segments_ids])
+        b_tokens, b_attention_masks, b_segments_ids, b_labels = batch
 
         with torch.no_grad():
-            prediction = nsp_model(tokens_tensor, token_type_ids=segments_tensors)
+            prediction = nsp_model(b_tokens, attention_mask=b_attention_masks, token_type_ids=b_segments_ids)
             prediction = prediction[0]
             softmax = torch.nn.Softmax(dim=1)
             prediction_sm = softmax(prediction)
@@ -205,6 +208,8 @@ if __name__ == "__main__":
 
     ## Required parameters
     parser.add_argument("--data_dir", required=True, type=str, help="root directory for data")
+    parser.add_argument("--mode", default=None, type=str, required=True,
+                        help="mode: train / test")
     parser.add_argument("--model_file", default=None, type=str, required=True,
                         help="The input training data file (a text file).")
 

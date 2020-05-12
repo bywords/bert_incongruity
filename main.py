@@ -82,12 +82,15 @@ def main(args):
     if args.model == "pool":
         test_set = \
             IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                       data_dir=args.data_dir, data_type=DataType.Test)
+                                       data_dir=args.data_dir, data_type=DataType.Test,
+                                       bert_type=args.bert_type)
         dev_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                             data_dir=args.data_dir, data_type=DataType.Dev)
+                                             data_dir=args.data_dir, data_type=DataType.Dev,
+                                             bert_type=args.bert_type)
 
         training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                  data_dir=args.data_dir, data_type=DataType.Train)
+                                                  data_dir=args.data_dir, data_type=DataType.Train,
+                                                  bert_type=args.bert_type)
     elif args.model =="ahde":
         test_set = \
             ParagraphIncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
@@ -251,8 +254,6 @@ if __name__ == "__main__":
     parser.add_argument("--data_dir", required=True, type=str, help="root directory for data")
     parser.add_argument("--mode", default=None, type=str, required=True,
                         help="mode: train / test")
-    parser.add_argument("--model", default=None, type=str, required=True,
-                        help="model: pool / ahde / nsp")
     parser.add_argument("--model_file", default=None, type=str, required=True,
                         help="The input training data file (a text file).")
 

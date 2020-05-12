@@ -9,7 +9,7 @@ import logging
 from torch import nn
 from torch.utils import data
 from sklearn.metrics import accuracy_score, roc_auc_score
-from transformers import BertTokenizer, AdamW, BertForNextSentencePrediction
+from transformers import BertTokenizer, BertForNextSentencePrediction
 
 from data_utils import NSP_IncongruityIterableDataset, DataType, tuplify_with_device_for_nsp
 
@@ -71,13 +71,10 @@ def main(args):
         # Add batch to GPU
         batch = tuplify_with_device_for_nsp(batch, device)
         # Unpack the inputs from our dataloader
-        b_tokens, b_segments_ids, b_labels = batch
-
-        tokens_tensor = torch.tensor([b_tokens])
-        segments_tensors = torch.tensor([b_segments_ids])
+        b_tokens, b_attention_masks, b_segments_ids, b_labels = batch
 
         with torch.no_grad():
-            prediction = nsp_model(tokens_tensor, token_type_ids=segments_tensors)
+            prediction = nsp_model(b_tokens, attention_mask=b_attention_masks, token_type_ids=b_segments_ids)
             prediction = prediction[0]
             softmax = torch.nn.Softmax(dim=1)
             prediction_sm = softmax(prediction)
@@ -111,7 +108,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", default=1, type=int, help="integer value for random seed")
     parser.add_argument("--bert_type", default='bert-base-uncased', type=str,
                         help="bert pretrained model type. e.g., 'bert-base-uncased'")
-    parser.add_argument("--max_seq_len", default=512, type=int, help="For AdamW Secheduler")
+    parser.add_argument("--max_seq_len", default=512, type=int, help="maximum sequence lengths for BERT")
     parser.add_argument("--batch_size", default=64, type=int, help="Batch size")
     parser.add_argument("--max_paragraph_num", default=30, type=int)
     parser.add_argument("--gpu_id", default=2, type=int, help="cuda device index")
