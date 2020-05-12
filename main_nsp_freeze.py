@@ -83,8 +83,8 @@ def main(args):
             softmax = torch.nn.Softmax(dim=1)
             prediction_sm = softmax(prediction)
 
-        preds = prediction_sm.detach().cpu().numpy()
-        label_ids = b_labels.to('cpu').numpy()
+        preds = prediction_sm.detach().cpu().numpy()[:, 0]
+        label_ids = b_labels.to('cpu').numpy().flatten()
 
         print(preds.shape)
         print(label_ids.shape)
