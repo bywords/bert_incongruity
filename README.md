@@ -22,7 +22,7 @@ scp -P 9922 kaist@kdialogue.snu.ac.kr:~/incon_dataset/NELA_2018_more_info/* data
 ### NIPS ver.
 
 ```bash
-scp -P 9922 kaist@kdialogue.snu.ac.kr:~/incon_dataset/headline_swap_news/train/ data_nips_incon/
+scp -P 9922 kaist@kdialogue.snu.ac.kr:~/incon_dataset/headline_swap_news/train/* data_nips_incon/
 ```
 
 Be cautious that the dataset size is huge.

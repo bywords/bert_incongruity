@@ -9,7 +9,7 @@ import logging
 from torch import nn
 from torch.utils import data
 from sklearn.metrics import accuracy_score, roc_auc_score
-from transformers import BertTokenizer, AdamW, WarmupLinearSchedule
+from transformers import BertTokenizer, AdamW, get_linear_schedule_with_warmup
 
 from data_utils import ParagraphIncongruityIterableDataset, IncongruityIterableDataset, DataType, tuplify_with_device, bert_dim
 from bert_pool import BertPoolForIncongruity
@@ -113,7 +113,8 @@ def main(args):
         # Define optimizers
         optimizer = AdamW(model.parameters(), lr=args.learning_rate,
                           correct_bias=False)  # To reproduce BertAdam specific behavior set correct_bias=False
-        scheduler = WarmupLinearSchedule(optimizer, warmup_steps=args.num_warmup_steps, t_total=args.num_total_steps)
+        scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=args.num_warmup_steps,
+                                                    num_training_steps=args.num_total_steps)
         loss_fct = nn.BCEWithLogitsLoss()
         train_loss_set = []
 
