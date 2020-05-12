@@ -11,7 +11,7 @@ from torch.utils import data
 from sklearn.metrics import accuracy_score, roc_auc_score
 from transformers import BertTokenizer, AdamW, get_linear_schedule_with_warmup, BertModel
 
-from data_utils import IncongruityIterableDataset, DataType, tuplify_with_device, bert_dim
+from data_utils import IncongruityIterableDataset, DataType, tuplify_with_device, bert_dim, str2bool
 from bert_pool import BertPoolForIncongruity
 
 
@@ -76,8 +76,12 @@ def main(args):
         # tokenizer, max_seq_len, filename
         dev_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
                                              data_dir=args.data_dir, data_type=DataType.Dev)
-        training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                  data_dir=args.data_dir, data_type=DataType.Train)
+        if args.sample_train:
+            training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                                      data_dir=args.data_dir, data_type=DataType.Train_sample)
+        else:
+            training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                                      data_dir=args.data_dir, data_type=DataType.Train)
 
         train_dataloader = data.DataLoader(training_set, batch_size=args.batch_size)
         dev_dataloader = data.DataLoader(dev_set, batch_size=args.batch_size)
@@ -249,7 +253,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", default=1, type=int, help="integer value for random seed")
     parser.add_argument("--bert_type", default='bert-base-uncased', type=str,
                         help="bert pretrained model type. e.g., 'bert-base-uncased'")
-    parser.add_argument("--freeze", default=False, type=bool, help="whether bert parameters are freezed")
+    parser.add_argument("--freeze", default=False, type=str2bool, help="whether bert parameters are freezed")
     parser.add_argument("--learning_rate", default=1e-3, type=float, help="Learning rate")
     parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max values for gradient clipping")
     parser.add_argument("--num_total_steps", default=1000, type=int, help="For AdamW Secheduler")
@@ -263,6 +267,7 @@ if __name__ == "__main__":
     parser.add_argument("--word-level-rnn-hidden-dim", default=384, type=int)
     parser.add_argument("--paragraph-level-rnn-hidden-dim", default=384, type=int)
     parser.add_argument("--gpu_id", default=2, type=int, help="cuda device index")
+    parser.add_argument("--sample_train", default=False, type=str2bool, help="whether to sample a train file")
 
     args = parser.parse_args()
     main(args)

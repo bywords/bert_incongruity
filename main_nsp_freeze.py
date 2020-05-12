@@ -6,7 +6,6 @@ import argparse
 import torch
 import logging
 
-from torch import nn
 from torch.utils import data
 from sklearn.metrics import accuracy_score, roc_auc_score
 from transformers import BertTokenizer, BertForNextSentencePrediction

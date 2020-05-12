@@ -25,7 +25,14 @@ scp -P 9922 kaist@kdialogue.snu.ac.kr:~/incon_dataset/NELA_2018_more_info/* data
 scp -P 9922 kaist@kdialogue.snu.ac.kr:~/incon_dataset/headline_swap_news/train/* data_nips_incon/
 ```
 
-Be cautious that the dataset size is huge.
+- Be cautious that the dataset size is huge.
+- The names of datasets should be train/val/test.tsv
+
+### Create sample dataset for test purposes
+
+```bash
+shuf -n 1000 train.tsv > train_sample.tsv
+```
 
 
 ## Train
@@ -34,4 +41,5 @@ Be cautious that the dataset size is huge.
 python main.py --mode train --data_dir [DATA_DIR] --model pool --model_file model.pt --freeze True
 ```
 
-* DATA_DIR: File names of each dataset should be equal to one another.
+
+
