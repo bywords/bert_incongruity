@@ -1,7 +1,6 @@
 # -*- encoding: utf-8 -*-
 import torch
 from torch import nn
-from transformers import BertModel
 
 
 class BertPoolForIncongruity(nn.Module):
@@ -10,9 +9,9 @@ class BertPoolForIncongruity(nn.Module):
     the pooled output.
     """
 
-    def __init__(self, vocab_file, hidden_size):
+    def __init__(self, bert_model, hidden_size):
         super(BertPoolForIncongruity, self).__init__()
-        self.bert = BertModel.from_pretrained(vocab_file)
+        self.bert = bert_model
         self.bilinear = nn.Bilinear(hidden_size, hidden_size, 1)
 
     def forward(self, headline_input_ids, headline_token_type_ids, headline_pool_masks, headline_lens,

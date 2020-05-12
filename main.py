@@ -9,11 +9,12 @@ import logging
 from torch import nn
 from torch.utils import data
 from sklearn.metrics import accuracy_score, roc_auc_score
-from transformers import BertTokenizer, AdamW, get_linear_schedule_with_warmup
+from transformers import BertTokenizer, AdamW, get_linear_schedule_with_warmup, BertModel
 
-from data_utils import ParagraphIncongruityIterableDataset, IncongruityIterableDataset, DataType, tuplify_with_device, bert_dim
+from data_utils import IncongruityIterableDataset, DataType, tuplify_with_device, bert_dim
 from bert_pool import BertPoolForIncongruity
 from bert_ahde import AttentionHDE
+
 
 
 # To disable kears warnings
@@ -63,39 +64,27 @@ def main(args):
     else:
         tokenizer = BertTokenizer.from_pretrained(args.bert_type, do_lower_case=False)
 
-
-    if args.model == "pool":
-        model = BertPoolForIncongruity(args.bert_type, hidden_size=bert_dim(args.bert_type))
-    elif args.model == "ahde":
-        hidden_dims = \
-            {'headline': args.headline_rnn_hidden_dim,
-            'word': args.word_level_rnn_hidden_dim,
-            'paragraph': args.word_level_rnn_hidden_dim
-        }
-        model = AttentionHDE(args.bert_type, hidden_dims, args.max_paragraph_num)
-    else:
-        raise ValueError("args.model should be set appropriately.")
-    model.cuda()
-
-    if args.freeze:
-        model.freeze_bert_encoder()
-    else:
-        model.unfreeze_bert_encoder()
-
-    # cannot shuffle with iterable dataset
-    test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                       data_dir=args.data_dir, data_type=DataType.Test)
-    dev_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                         data_dir=args.data_dir, data_type=DataType.Dev)
-
-    training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                  data_dir=args.data_dir, data_type=DataType.Train)
-
-    test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
-
     if args.mode == "train":
 
+        bert_model = BertModel.from_pretrained(args.bert_type)
+        model = BertPoolForIncongruity(bert_model, hidden_size=bert_dim(args.bert_type))
+        model.cuda()
+
+        if args.freeze:
+            model.freeze_bert_encoder()
+        else:
+            model.unfreeze_bert_encoder()
+
+        print(model.state_dict())
+        exit()
+
+
         # tokenizer, max_seq_len, filename
+        dev_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                             data_dir=args.data_dir, data_type=DataType.Dev)
+        training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                                  data_dir=args.data_dir, data_type=DataType.Train)
+
         train_dataloader = data.DataLoader(training_set, batch_size=args.batch_size)
         dev_dataloader = data.DataLoader(dev_set, batch_size=args.batch_size)
 
@@ -190,9 +179,14 @@ def main(args):
 
             logger.info("Epoch {} - Dev Acc: {:.4f} AUROC: {:.4f}".format(e_idx, dev_acc, dev_auroc))
 
+        # check whether below command save state dict of pretrained bert as well.
         torch.save(model.state_dict(), model_path)
 
     elif args.mode == "test":
+        test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                              data_dir=args.data_dir, data_type=DataType.Test)
+        test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
+
         model = torch.load_state_dict(torch.load(model_path))
 
     else:

@@ -317,8 +317,8 @@ def pad_and_mask_for_bert_emb(text, tokenizer, max_seq_len):
 
 def pad_and_mask_for_bert_nsp(text1, text2, tokenizer, max_seq_len):
 
-    BODYTEXT_MAX_LEN = 450
-    HEADLINE_MAX_LEN = 60
+    HEADLINE_MAX_LEN = 22
+    BODYTEXT_MAX_LEN = 512 - 2 - HEADLINE_MAX_LEN
 
     text1_toks = ["[CLS]"] + tokenizer.tokenize(text1)[:BODYTEXT_MAX_LEN] + ["[SEP]"]
     text2_toks = tokenizer.tokenize(text2)[:HEADLINE_MAX_LEN]
