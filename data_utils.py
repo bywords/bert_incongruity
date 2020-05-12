@@ -330,9 +330,9 @@ def pad_and_mask_for_bert_nsp(text1, text2, tokenizer, max_seq_len):
 
     text1_len = len(text1_toks); text2_len = len(text2_toks); padded_len = max_seq_len - text1_len - text2_len
     segments_ids = [0] * text1_len + [1] * text2_len + [1] * padded_len
-    segments_ids = np.array(segments_ids).reshape(-1, 1)
+    segments_ids = np.array(segments_ids).reshape(-1, )
 
     attention_masks = [1] * (text1_len+text2_len) + [0] * padded_len
-    attention_masks = np.array(attention_masks).reshape(-1, 1)
+    attention_masks = np.array(attention_masks).reshape(-1, )
 
     return indexed_tokens, attention_masks, segments_ids
