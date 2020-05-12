@@ -173,6 +173,7 @@ class NSP_IncongruityIterableDataset(IterableDataset):
     def line_mapper(self, line):
         # Splits the line into text and label and applies preprocessing to the text
         df = pd.read_csv(StringIO(line), sep="\t", header=None)
+        print(line) # for debugging
         indexed_tokens, segment_masks, label = self.preprocess(df.iloc[0, 1], df.iloc[0, 2], df.iloc[0, 3])
 
         return indexed_tokens, segment_masks, label
