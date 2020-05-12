@@ -189,7 +189,10 @@ def main(args):
 
         # check whether below command save state dict of pretrained bert as well.
         logger.info("Save best model: Epoch {} - Dev Acc: {:.4f} AUROC: {:.4f}".format(best_ep, best_dev_acc, best_dev_auroc))
-        torch.save(best_model_state_on_dev, model_path)
+        if args.sample_train:
+            logger.info("Skip saving when args.sample_train is True.")
+        else:
+            torch.save(best_model_state_on_dev, model_path)
 
     elif args.mode == "test":
         bert_model = BertModel.from_pretrained(args.bert_type)
