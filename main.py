@@ -74,14 +74,16 @@ def main(args):
             model.unfreeze_bert_encoder()
 
         # tokenizer, max_seq_len, filename
-        dev_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                             data_dir=args.data_dir, data_type=DataType.Dev)
         if args.sample_train:
             training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
                                                       data_dir=args.data_dir, data_type=DataType.Train_sample)
+            dev_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                                 data_dir=args.data_dir, data_type=DataType.Dev_sample)
         else:
             training_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
                                                       data_dir=args.data_dir, data_type=DataType.Train)
+            dev_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                                 data_dir=args.data_dir, data_type=DataType.Dev)
 
         train_dataloader = data.DataLoader(training_set, batch_size=args.batch_size)
         dev_dataloader = data.DataLoader(dev_set, batch_size=args.batch_size)
@@ -195,14 +197,17 @@ def main(args):
         model = model.load_state_dict(torch.load(model_path))
         model.cuda()
 
-        test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                              data_dir=args.data_dir, data_type=DataType.Test)
-        test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
-
     else:
         logging.error("Wrong mode: {}".format(args.mode))
         raise TypeError("args.mode should be train or test.")
 
+    if args.sample_train:
+        test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                              data_dir=args.data_dir, data_type=DataType.Test_sample)
+    else:
+        test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                              data_dir=args.data_dir, data_type=DataType.Test)
+    test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
 
 
     # Evaluate test data for one epoch
