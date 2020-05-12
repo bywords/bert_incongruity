@@ -75,7 +75,7 @@ def main(args):
         else:
             model.unfreeze_bert_encoder()
 
-        print(model.state_dict())
+        print([k for k, t in model.state_dict()])
         exit()
 
 
