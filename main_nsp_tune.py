@@ -104,6 +104,11 @@ def main(args):
                 # Clear out the gradients (by default they accumulate)
                 optimizer.zero_grad()
 
+                print(b_indexed_tokens.size())
+                print(b_attention_masks.size())
+                print(b_segments_ids.size())
+                print(b_labels.size())
+
                 # Forward pass
                 loss, _ = nsp_model(b_indexed_tokens, attention_mask=b_attention_masks,
                                     token_type_ids=b_segments_ids, next_sentence_label=b_labels)
