@@ -13,7 +13,6 @@ from transformers import BertTokenizer, AdamW, get_linear_schedule_with_warmup, 
 
 from data_utils import IncongruityIterableDataset, DataType, tuplify_with_device, bert_dim
 from bert_pool import BertPoolForIncongruity
-from bert_ahde import AttentionHDE
 
 
 
@@ -75,10 +74,6 @@ def main(args):
         else:
             model.unfreeze_bert_encoder()
 
-        print([k for (k, t) in model.state_dict().items()])
-        exit()
-
-
         # tokenizer, max_seq_len, filename
         dev_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
                                              data_dir=args.data_dir, data_type=DataType.Dev)
@@ -96,7 +91,9 @@ def main(args):
         loss_fct = nn.BCEWithLogitsLoss()
         train_loss_set = []
 
-        # trange is a tqdm wrapper around the normal python range
+        best_ep = 0
+        best_model_state_on_dev = None
+        best_dev_acc = 0.0
         for e_idx in range(1, epochs+1):
 
             logger.info("Epoch {} - Start Training".format(e_idx))
@@ -177,21 +174,31 @@ def main(args):
             dev_acc = accuracy_score(dev_y_targets, dev_y_preds.round())
             dev_auroc = roc_auc_score(dev_y_targets, dev_y_preds)
 
+            if dev_acc > best_dev_acc:
+                best_ep = e_idx
+                best_dev_acc = dev_acc
+                best_dev_auroc = dev_auroc
+                best_model_state_on_dev = model.state_dict()
+
             logger.info("Epoch {} - Dev Acc: {:.4f} AUROC: {:.4f}".format(e_idx, dev_acc, dev_auroc))
 
         # check whether below command save state dict of pretrained bert as well.
-        torch.save(model.state_dict(), model_path)
+        logger.info("Save best model: Epoch {} - Dev Acc: {:.4f} AUROC: {:.4f}".format(best_ep, best_dev_acc, best_dev_auroc))
+        torch.save(best_model_state_on_dev, model_path)
 
     elif args.mode == "test":
+        model = torch.load_state_dict(torch.load(model_path))
+        model.cuda()
+
         test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
                                               data_dir=args.data_dir, data_type=DataType.Test)
         test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
 
-        model = torch.load_state_dict(torch.load(model_path))
-
     else:
         logging.error("Wrong mode: {}".format(args.mode))
-        raise TypeError("args.model should be train or test.")
+        raise TypeError("args.mode should be train or test.")
+
+
 
     # Evaluate test data for one epoch
     y_targets, y_preds = [], []
