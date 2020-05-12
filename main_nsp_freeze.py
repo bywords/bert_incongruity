@@ -57,6 +57,7 @@ def main(args):
     tokenizer = BertTokenizer.from_pretrained(args.bert_type, do_lower_case=True)
 
     nsp_model = BertForNextSentencePrediction.from_pretrained(args.bert_type)
+    nsp_model.cuda()
 
     # cannot shuffle with iterable dataset
     test_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
