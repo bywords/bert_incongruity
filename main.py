@@ -34,8 +34,8 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # output setups
-    exp_id = "data-{}_model-{}_freeze-{}_seed-{}".format(args.data_dir, args.model_file,
-                                                         args.freeze, args.seed)
+    exp_id = "data-{}_freeze-{}_seed-{}".format(args.data_dir, args.model_file,
+                                                args.freeze, args.seed)
     exp_dir = os.path.join(args.output_dir, exp_id)
     if not os.path.exists(exp_dir):
         os.makedirs(exp_dir)
@@ -187,7 +187,9 @@ def main(args):
         torch.save(best_model_state_on_dev, model_path)
 
     elif args.mode == "test":
-        model = torch.load_state_dict(torch.load(model_path))
+        bert_model = BertModel.from_pretrained(args.bert_type)
+        model = BertPoolForIncongruity(bert_model, hidden_size=bert_dim(args.bert_type))
+        model = model.load_state_dict(torch.load(model_path))
         model.cuda()
 
         test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
@@ -241,10 +243,9 @@ if __name__ == "__main__":
     parser.add_argument("--data_dir", required=True, type=str, help="root directory for data")
     parser.add_argument("--mode", default=None, type=str, required=True,
                         help="mode: train / test")
-    parser.add_argument("--model_file", default=None, type=str, required=True,
-                        help="The input training data file (a text file).")
 
     ## Other parameters
+    parser.add_argument("--model_file", default="model.pt", type=str, help="The input training data file (a text file).")
     parser.add_argument("--output_dir", default="output", type=str, help="root directory for output")
     parser.add_argument("--seed", default=1, type=int, help="integer value for random seed")
     parser.add_argument("--bert_type", default='bert-base-uncased', type=str,
