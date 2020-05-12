@@ -187,6 +187,11 @@ class NSP_IncongruityIterableDataset(IterableDataset):
 
         label = np.array(label).reshape(-1, 1)
 
+        # for debugging
+        print(indexed_tokens.shape)
+        print(segment_masks.shape)
+        print(label.shape)
+
         return indexed_tokens, segment_masks, label
 
 
