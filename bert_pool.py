@@ -16,8 +16,8 @@ class BertPoolForIncongruity(nn.Module):
 
     def forward(self, headline_input_ids, headline_token_type_ids, headline_pool_masks, headline_lens,
                 bodytext_input_ids, bodytext_token_type_ids, bodytext_pool_masks, bodytext_lens):
-        headline_outputs = self.bert(headline_input_ids, token_type_ids=headline_token_type_ids)[0]  # last hidden states
-        bodytext_outputs = self.bert(bodytext_input_ids, token_type_ids=bodytext_token_type_ids)[0]  # last hidden states
+        headline_outputs = self.bert(headline_input_ids, attention_mask=headline_token_type_ids)[0]  # last hidden states
+        bodytext_outputs = self.bert(bodytext_input_ids, attention_mask=bodytext_token_type_ids)[0]  # last hidden states
 
         headline_mean_hidden = \
             torch.div(torch.matmul(torch.transpose(headline_outputs, 1, 2), headline_pool_masks), headline_lens).squeeze()
