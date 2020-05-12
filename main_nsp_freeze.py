@@ -86,6 +86,10 @@ def main(args):
         preds = prediction_sm.detach().cpu().numpy()
         label_ids = b_labels.to('cpu').numpy()
 
+        print(preds.shape)
+        print(label_ids.shape)
+        exit()
+
         y_preds.append(preds)
         y_targets.append(label_ids)
 
