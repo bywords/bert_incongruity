@@ -261,7 +261,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", default=1, type=int, help="integer value for random seed")
     parser.add_argument("--bert_type", default='bert-base-uncased', type=str,
                         help="bert pretrained model type. e.g., 'bert-base-uncased'")
-    parser.add_argument("--freeze", default=False, type=str2bool, help="whether bert parameters are freezed")
+    parser.add_argument("--freeze", default=True, type=str2bool, help="whether bert parameters are freezed")
     parser.add_argument("--learning_rate", default=1e-3, type=float, help="Learning rate")
     parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max values for gradient clipping")
     parser.add_argument("--num_total_steps", default=1000, type=int, help="For AdamW Secheduler")
