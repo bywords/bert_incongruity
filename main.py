@@ -267,8 +267,8 @@ if __name__ == "__main__":
     parser.add_argument("--num_total_steps", default=1000, type=int, help="For AdamW Secheduler")
     parser.add_argument("--num_warmup_steps", default=100, type=int, help="For AdamW Secheduler")
     parser.add_argument("--max_seq_len", default=512, type=int, help="For AdamW Secheduler")
-    parser.add_argument("--batch_size", default=16, type=int, help="Batch size")
-    parser.add_argument("--max_epochs", default=4, type=int,
+    parser.add_argument("--batch_size", default=64, type=int, help="Batch size")
+    parser.add_argument("--max_epochs", default=1, type=int,
                         help="Number of max epochs for training.")
     parser.add_argument("--max_paragraph_num", default=30, type=int)
     parser.add_argument("--headline-rnn-hidden-dim", default=384, type=int)
