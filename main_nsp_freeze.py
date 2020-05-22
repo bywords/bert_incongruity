@@ -31,7 +31,7 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # output setups
-    exp_id = "bertNSP_data-{}_freeze-True_seed-{}".format(args.data_dir, args.seed)
+    exp_id = "bertNSP_data-{}_freezeTrue_seed-{}".format(args.data_dir, args.seed)
 
     exp_dir = os.path.join(args.output_dir, exp_id)
     if not os.path.exists(exp_dir):
@@ -42,7 +42,7 @@ def main(args):
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
                         level=logging.INFO)
-    logger = logging.getLogger("bert_nsp_incongruity")
+    logger = logging.getLogger("bertNSP")
 
     f_handler = logging.FileHandler(log_file)
     f_handler.setLevel(logging.INFO)
