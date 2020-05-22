@@ -28,7 +28,9 @@ class DataType(enum.Enum):
    Train_sample = 8
    Dev_sample = 9
    Test_sample = 10
-   Test_real = 11
+   Test_real_old = 11
+   Test_real_new = 12
+   Test_real_covid = 13
 
 
 class NSP_IncongruityIterableDataset(IterableDataset):
@@ -55,7 +57,11 @@ class NSP_IncongruityIterableDataset(IterableDataset):
             path = os.path.join(data_dir, "dev_sample.tsv")
         elif data_type == DataType.Test_sample:
             path = os.path.join(data_dir, "test_sample.tsv")
-        elif data_type == DataType.Test_real:
+        elif data_type == DataType.Test_real_old:
+            path = os.path.join(data_dir, "real_world_articles_ascii.tsv")
+        elif data_type == DataType.Test_real_new:
+            path = os.path.join(data_dir, "real_world_articles_ascii.tsv")
+        elif data_type == DataType.Test_real_covid:
             path = os.path.join(data_dir, "real_world_articles_ascii.tsv")
         else:
             raise TypeError("data_type should be DataType class.")
@@ -123,7 +129,11 @@ class IncongruityIterableDataset(IterableDataset):
             path = os.path.join(data_dir, "dev_sample.tsv")
         elif data_type == DataType.Test_sample:
             path = os.path.join(data_dir, "test_sample.tsv")
-        elif data_type == DataType.Test_real:
+        elif data_type == DataType.Test_real_old:
+            path = os.path.join(data_dir, "real_world_articles_ascii.tsv")
+        elif data_type == DataType.Test_real_new:
+            path = os.path.join(data_dir, "real_world_articles_ascii.tsv")
+        elif data_type == DataType.Test_real_covid:
             path = os.path.join(data_dir, "real_world_articles_ascii.tsv")
         else:
             raise TypeError("data_type should be DataType class.")
