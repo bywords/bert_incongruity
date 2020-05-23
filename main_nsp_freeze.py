@@ -59,14 +59,26 @@ def main(args):
     nsp_model.cuda()
 
     # cannot shuffle with iterable dataset
-    if args.sample_train:
-        test_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                                  data_dir=args.data_dir, data_type=DataType.Test_sample)
-    else:
+    if args.mode == "test":
         test_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
                                                   data_dir=args.data_dir, data_type=DataType.Test)
-    test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
 
+    elif args.mode == "real_old":
+        test_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                              data_dir=args.data_dir, data_type=DataType.Test_real_old)
+
+    elif args.mode == "real_new":
+        test_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                              data_dir=args.data_dir, data_type=DataType.Test_real_new)
+
+    elif args.mode == "real_covid":
+        test_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                              data_dir=args.data_dir, data_type=DataType.Test_real_covid)
+
+    else:
+        raise TypeError("args.mode is wrong.")
+
+    test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
     nsp_model.eval()
 
     # Evaluate test data for one epoch
@@ -106,6 +118,8 @@ if __name__ == "__main__":
 
     ## Required parameters
     parser.add_argument("--data_dir", required=True, type=str, help="root directory for data")
+    parser.add_argument("--mode", required=True, type=str,
+                        help="mode: test / real_old / real_new / real_covid")
 
     ## Other parameters
     parser.add_argument("--output_dir", default="output", type=str, help="root directory for output")

@@ -194,23 +194,34 @@ def main(args):
         else:
             torch.save(best_model_state_on_dev, model_path)
 
-    elif args.mode == "test":
+    else:
         bert_model = BertModel.from_pretrained(args.bert_type)
         model = BertPoolForIncongruity(bert_model, hidden_size=bert_dim(args.bert_type))
         model = model.load_state_dict(torch.load(model_path))
         model.cuda()
 
-    else:
-        logging.error("Wrong mode: {}".format(args.mode))
-        raise TypeError("args.mode should be train or test.")
+    if args.mode in ["train", "test"]:
+        if args.sample_train:
+            test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                                  data_dir=args.data_dir, data_type=DataType.Test_sample)
+        else:
+            test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                                  data_dir=args.data_dir, data_type=DataType.Test)
 
-    if args.sample_train:
+    elif args.mode == "real_old":
         test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                              data_dir=args.data_dir, data_type=DataType.Test_sample)
-    else:
+                                              data_dir=args.data_dir, data_type=DataType.Test_real_old)
+
+    elif args.mode == "real_new":
         test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                              data_dir=args.data_dir, data_type=DataType.Test)
+                                              data_dir=args.data_dir, data_type=DataType.Test_real_new)
+
+    elif args.mode == "real_covid":
+        test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                              data_dir=args.data_dir, data_type=DataType.Test_real_covid)
+
     test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
+
 
 
     # Evaluate test data for one epoch
@@ -252,8 +263,8 @@ if __name__ == "__main__":
 
     ## Required parameters
     parser.add_argument("--data_dir", required=True, type=str, help="root directory for data")
-    parser.add_argument("--mode", default=None, type=str, required=True,
-                        help="mode: train / test")
+    parser.add_argument("--mode", required=True, type=str,
+                        help="mode: train / test / real_old / real_new / real_covid")
 
     ## Other parameters
     parser.add_argument("--model_file", default="model.pt", type=str, help="The input training data file (a text file).")

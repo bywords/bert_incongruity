@@ -58,11 +58,11 @@ class NSP_IncongruityIterableDataset(IterableDataset):
         elif data_type == DataType.Test_sample:
             path = os.path.join(data_dir, "test_sample.tsv")
         elif data_type == DataType.Test_real_old:
-            path = os.path.join(data_dir, "real_world_articles_ascii.tsv")
+            path = os.path.join(data_dir, "real_world_old_no_EOS_EOP.tsv")
         elif data_type == DataType.Test_real_new:
-            path = os.path.join(data_dir, "real_world_articles_ascii.tsv")
+            path = os.path.join(data_dir, "real_world_new_no_EOS_EOP.tsv")
         elif data_type == DataType.Test_real_covid:
-            path = os.path.join(data_dir, "real_world_articles_ascii.tsv")
+            path = os.path.join(data_dir, "real_world_covid_no_EOS_EOP.tsv")
         else:
             raise TypeError("data_type should be DataType class.")
 
@@ -130,11 +130,11 @@ class IncongruityIterableDataset(IterableDataset):
         elif data_type == DataType.Test_sample:
             path = os.path.join(data_dir, "test_sample.tsv")
         elif data_type == DataType.Test_real_old:
-            path = os.path.join(data_dir, "real_world_articles_ascii.tsv")
+            path = os.path.join(data_dir, "real_world_old_no_EOS_EOP.tsv")
         elif data_type == DataType.Test_real_new:
-            path = os.path.join(data_dir, "real_world_articles_ascii.tsv")
+            path = os.path.join(data_dir, "real_world_new_no_EOS_EOP.tsv")
         elif data_type == DataType.Test_real_covid:
-            path = os.path.join(data_dir, "real_world_articles_ascii.tsv")
+            path = os.path.join(data_dir, "real_world_covid_no_EOS_EOP.tsv")
         else:
             raise TypeError("data_type should be DataType class.")
 
