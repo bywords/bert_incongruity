@@ -31,7 +31,7 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # output setups
-    exp_id = "bertNSP_data-{}_freezeTrue_seed-{}".format(args.data_dir, args.seed)
+    exp_id = "bertNSP_data-{}_freezeTrue_seed-{}".format(args.data_dir.strip("/"), args.seed)
 
     exp_dir = os.path.join(args.output_dir, exp_id)
     if not os.path.exists(exp_dir):
