@@ -13,7 +13,7 @@ from sklearn.metrics import accuracy_score, roc_auc_score
 from transformers import BertTokenizer, AdamW, get_linear_schedule_with_warmup, BertModel
 
 from data_utils import IncongruityIterableDataset, RealworldDataset, \
-    DataType, tuplify_with_device, bert_dim, str2bool
+    DataType, tuplify_with_device, tuplify_with_device_for_inference, bert_dim, str2bool
 from bert_pool import BertPoolForIncongruity
 
 
@@ -276,7 +276,7 @@ def main(args):
         y_targets, y_preds = [], []
         for batch in test_dataloader:
             # Add batch to GPU
-            batch = tuplify_with_device(batch, device)
+            batch = tuplify_with_device_for_inference(batch, device)
             # Unpack the inputs from our dataloader
             b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens, \
             b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens = batch

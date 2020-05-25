@@ -116,7 +116,6 @@ class NSP_RealworldDataset(Dataset):
         self.tokenizer = tokenizer
         self.max_seq_len = max_seq_len
         self.df = pd.read_csv(path, sep=",", header=None, encoding="utf-8")
-        print(self.df.columns)
         self.headline = self.df.iloc[:, 1]
         self.bodytext = self.df.iloc[:, 2]
 
@@ -216,7 +215,7 @@ class IncongruityIterableDataset(IterableDataset):
                label
 
 
-class RealworldDataset(IterableDataset):
+class RealworldDataset(Dataset):
     def __init__(self, tokenizer, max_seq_len, data_dir, data_type):
         'Initialization'
         if data_type == DataType.Test_real_old:
@@ -232,26 +231,18 @@ class RealworldDataset(IterableDataset):
         self.tokenizer = tokenizer
         self.max_seq_len = max_seq_len
 
-    def __iter__(self):
+        self.df = pd.read_csv(path, sep=",", header=None, encoding="utf-8")
+        self.headline = self.df.iloc[:, 1]
+        self.bodytext = self.df.iloc[:, 2]
 
-        # Create an iterator
-        file_itr = open(self.path, encoding="utf-8")
+    def __len__(self):
+        'Denotes the total number of samples'
+        return len(self.df.index)
 
-        # Map each element using the line_mapper
-        mapped_itr = map(self.line_mapper, file_itr)
+    def __getitem__(self, index):
 
-        return mapped_itr
-
-    def line_mapper(self, line):
-        # Splits the line into text and label and applies preprocessing to the text
-        try:
-            df = pd.read_csv(StringIO(line), sep="\t", header=None, quoting=csv.QUOTE_NONE)
-        except:
-            print(line)
-            sys.exit()
-
-        raw_headline = df.iloc[0, 1]
-        raw_bodytext = df.iloc[0, 2]
+        raw_headline = self.headline[index]
+        raw_bodytext = self.bodytext[index]
 
         headline, h_mask, h_pool_mask, h_len, bodytext, b_mask, b_pool_mask, b_len = \
             self.preprocess(raw_headline, raw_bodytext)
@@ -376,6 +367,12 @@ def tuplify_with_device(batch, device):
                   batch[4].to(device, dtype=torch.long), batch[5].to(device, dtype=torch.long),
                   batch[6].to(device, dtype=torch.float), batch[7].to(device, dtype=torch.float),
                   batch[8].to(device, dtype=torch.float)])
+
+def tuplify_with_device_for_inference(batch, device):
+    return tuple([batch[0].to(device, dtype=torch.long), batch[1].to(device, dtype=torch.long),
+                  batch[2].to(device, dtype=torch.float), batch[3].to(device, dtype=torch.float),
+                  batch[4].to(device, dtype=torch.long), batch[5].to(device, dtype=torch.long),
+                  batch[6].to(device, dtype=torch.float), batch[7].to(device, dtype=torch.float)])
 
 
 def tuplify_with_device_for_nsp(batch, device):
