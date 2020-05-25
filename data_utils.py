@@ -7,7 +7,7 @@ import pandas as pd
 from copy import deepcopy
 from io import StringIO
 from keras.preprocessing.sequence import pad_sequences
-from torch.utils.data import IterableDataset
+from torch.utils.data import IterableDataset, Dataset
 
 
 bert_input_template = "[CLS] {} [SEP]"
@@ -115,27 +115,16 @@ class NSP_RealworldDataset(IterableDataset):
         self.path = path
         self.tokenizer = tokenizer
         self.max_seq_len = max_seq_len
+        self.df = pd.read_csv(path, sep="\t", header=None, quoting=csv.QUOTE_NONE, encoding="utf-8")
 
-    def __iter__(self):
+    def __len__(self):
+        'Denotes the total number of samples'
+        return len(self.df.index)
 
-        # Create an iterator
-        file_itr = open(self.path, encoding="utf-8")
+    def __getitem__(self, index):
 
-        # Map each element using the line_mapper
-        mapped_itr = map(self.line_mapper, file_itr)
-
-        return mapped_itr
-
-    def line_mapper(self, line):
-        # Splits the line into text and label and applies preprocessing to the text
-        try:
-            df = pd.read_csv(StringIO(line), sep="\t", header=None, quoting=csv.QUOTE_NONE)
-        except:
-            print(line)
-            exit()
-
-        raw_headline = df.iloc[0, 1]
-        raw_bodytext = df.iloc[0, 2]
+        raw_headline = self.df.iloc[index, 1]
+        raw_bodytext = self.df.iloc[index, 2]
 
         indexed_tokens, attention_masks, segment_ids = \
             self.preprocess(raw_headline, raw_bodytext)
@@ -224,8 +213,7 @@ class IncongruityIterableDataset(IterableDataset):
                label
 
 
-class RealworldDataset(IterableDataset):
-    'Characterizes an Iterabledataset for PyTorch'
+class RealworldDataset(Dataset):
     def __init__(self, tokenizer, max_seq_len, data_dir, data_type):
         'Initialization'
         if data_type == DataType.Test_real_old:
