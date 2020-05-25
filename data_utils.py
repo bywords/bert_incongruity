@@ -99,7 +99,7 @@ class NSP_IncongruityIterableDataset(IterableDataset):
         return indexed_tokens, attention_masks, segment_ids, label
 
 
-class NSP_RealworldDataset(IterableDataset):
+class NSP_RealworldDataset(Dataset):
     'Characterizes an Iterabledataset for PyTorch'
     def __init__(self, tokenizer, max_seq_len, data_dir, data_type):
         'Initialization'
@@ -213,7 +213,7 @@ class IncongruityIterableDataset(IterableDataset):
                label
 
 
-class RealworldDataset(Dataset):
+class RealworldDataset(IterableDataset):
     def __init__(self, tokenizer, max_seq_len, data_dir, data_type):
         'Initialization'
         if data_type == DataType.Test_real_old:
