@@ -116,6 +116,7 @@ class NSP_RealworldDataset(Dataset):
         self.tokenizer = tokenizer
         self.max_seq_len = max_seq_len
         self.df = pd.read_csv(path, sep="\t", header=None, quoting=csv.QUOTE_NONE, encoding="utf-8")
+        print(self.df.columns)
         self.headline = self.df.iloc[:, 1]
         self.bodytext = self.df.iloc[:, 2]
 
