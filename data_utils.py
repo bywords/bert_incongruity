@@ -116,6 +116,8 @@ class NSP_RealworldDataset(Dataset):
         self.tokenizer = tokenizer
         self.max_seq_len = max_seq_len
         self.df = pd.read_csv(path, sep="\t", header=None, quoting=csv.QUOTE_NONE, encoding="utf-8")
+        self.headline = self.df.iloc[:, 1]
+        self.bodytext = self.df.iloc[:, 2]
 
     def __len__(self):
         'Denotes the total number of samples'
@@ -123,8 +125,8 @@ class NSP_RealworldDataset(Dataset):
 
     def __getitem__(self, index):
 
-        raw_headline = self.df.iloc[index, 1]
-        raw_bodytext = self.df.iloc[index, 2]
+        raw_headline = self.headline[index]
+        raw_bodytext = self.bodytext[index]
 
         indexed_tokens, attention_masks, segment_ids = \
             self.preprocess(raw_headline, raw_bodytext)
