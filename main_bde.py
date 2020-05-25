@@ -288,7 +288,12 @@ def main(args):
 
             # Move logits and labels to CPU
             preds = preds.detach().cpu().numpy()
+
+            print(preds.shape)
             y_preds.append(preds)
+            print(y_preds)
+            break
+
 
         y_preds = pd.Series(np.concatenate(y_preds).reshape((-1,)).to_list())
         y_preds.to_csv(pred_output_path, index=False, header=False)
