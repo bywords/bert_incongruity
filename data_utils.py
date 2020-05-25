@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-import os, csv
+import os, csv, sys
 import numpy as np
 import enum
 import torch
@@ -57,14 +57,8 @@ class NSP_IncongruityIterableDataset(IterableDataset):
             path = os.path.join(data_dir, "dev_sample.tsv")
         elif data_type == DataType.Test_sample:
             path = os.path.join(data_dir, "test_sample.tsv")
-        elif data_type == DataType.Test_real_old:
-            path = os.path.join(data_dir, "real_world_old_no_EOS_EOP.tsv")
-        elif data_type == DataType.Test_real_new:
-            path = os.path.join(data_dir, "real_world_new_no_EOS_EOP.tsv")
-        elif data_type == DataType.Test_real_covid:
-            path = os.path.join(data_dir, "real_world_covid_no_EOS_EOP.tsv")
         else:
-            raise TypeError("data_type should be DataType class.")
+            raise TypeError("data_type should be either train or test. Cannot be a type for real articles.")
 
         self.path = path
         self.tokenizer = tokenizer
@@ -105,38 +99,18 @@ class NSP_IncongruityIterableDataset(IterableDataset):
         return indexed_tokens, attention_masks, segment_ids, label
 
 
-class IncongruityIterableDataset(IterableDataset):
+class NSPRealworldDataset(IterableDataset):
     'Characterizes an Iterabledataset for PyTorch'
     def __init__(self, tokenizer, max_seq_len, data_dir, data_type):
         'Initialization'
-        if data_type == DataType.Train:
-            path = os.path.join(data_dir, "train.tsv")
-        elif data_type == DataType.Dev:
-            path = os.path.join(data_dir, "dev.tsv")
-        elif data_type == DataType.Test:
-            path = os.path.join(data_dir, "test.tsv")
-        elif data_type == DataType.Test_0:
-            path = os.path.join(data_dir, "test_type_0.tsv")
-        elif data_type == DataType.Test_1:
-            path = os.path.join(data_dir, "test_type_1.tsv")
-        elif data_type == DataType.Test_2:
-            path = os.path.join(data_dir, "test_type_2.tsv")
-        elif data_type == DataType.Test_3:
-            path = os.path.join(data_dir, "test_type_3.tsv")
-        elif data_type == DataType.Train_sample:
-            path = os.path.join(data_dir, "train_sample.tsv")
-        elif data_type == DataType.Dev_sample:
-            path = os.path.join(data_dir, "dev_sample.tsv")
-        elif data_type == DataType.Test_sample:
-            path = os.path.join(data_dir, "test_sample.tsv")
-        elif data_type == DataType.Test_real_old:
+        if data_type == DataType.Test_real_old:
             path = os.path.join(data_dir, "real_world_old_no_EOS_EOP.tsv")
         elif data_type == DataType.Test_real_new:
             path = os.path.join(data_dir, "real_world_new_no_EOS_EOP.tsv")
         elif data_type == DataType.Test_real_covid:
             path = os.path.join(data_dir, "real_world_covid_no_EOS_EOP.tsv")
         else:
-            raise TypeError("data_type should be DataType class.")
+            raise TypeError("data_type should be one of the DataType classes for real world.")
 
         self.path = path
         self.tokenizer = tokenizer
@@ -162,6 +136,70 @@ class IncongruityIterableDataset(IterableDataset):
 
         raw_headline = df.iloc[0, 1]
         raw_bodytext = df.iloc[0, 2]
+
+        indexed_tokens, attention_masks, segment_ids = \
+            self.preprocess(raw_headline, raw_bodytext)
+
+        return indexed_tokens, attention_masks, segment_ids
+
+    def preprocess(self, headline, bodytext):
+        indexed_tokens, attention_masks, segment_ids = pad_and_mask_for_bert_nsp(bodytext, headline,
+                                                                                 self.tokenizer, self.max_seq_len)
+
+        return indexed_tokens, attention_masks, segment_ids
+
+
+class IncongruityIterableDataset(IterableDataset):
+    'Characterizes an Iterabledataset for PyTorch'
+    def __init__(self, tokenizer, max_seq_len, data_dir, data_type):
+        'Initialization'
+        if data_type == DataType.Train:
+            path = os.path.join(data_dir, "train.tsv")
+        elif data_type == DataType.Dev:
+            path = os.path.join(data_dir, "dev.tsv")
+        elif data_type == DataType.Test:
+            path = os.path.join(data_dir, "test.tsv")
+        elif data_type == DataType.Test_0:
+            path = os.path.join(data_dir, "test_type_0.tsv")
+        elif data_type == DataType.Test_1:
+            path = os.path.join(data_dir, "test_type_1.tsv")
+        elif data_type == DataType.Test_2:
+            path = os.path.join(data_dir, "test_type_2.tsv")
+        elif data_type == DataType.Test_3:
+            path = os.path.join(data_dir, "test_type_3.tsv")
+        elif data_type == DataType.Train_sample:
+            path = os.path.join(data_dir, "train_sample.tsv")
+        elif data_type == DataType.Dev_sample:
+            path = os.path.join(data_dir, "dev_sample.tsv")
+        elif data_type == DataType.Test_sample:
+            path = os.path.join(data_dir, "test_sample.tsv")
+        else:
+            raise TypeError("data_type should be either train or test. Cannot be a type for real articles.")
+
+        self.path = path
+        self.tokenizer = tokenizer
+        self.max_seq_len = max_seq_len
+
+    def __iter__(self):
+
+        # Create an iterator
+        file_itr = open(self.path, encoding="utf-8")
+
+        # Map each element using the line_mapper
+        mapped_itr = map(self.line_mapper, file_itr)
+
+        return mapped_itr
+
+    def line_mapper(self, line):
+        # Splits the line into text and label and applies preprocessing to the text
+        try:
+            df = pd.read_csv(StringIO(line), sep="\t", header=None, quoting=csv.QUOTE_NONE)
+        except:
+            print(line)
+            sys.exit()
+
+        raw_headline = df.iloc[0, 1]
+        raw_bodytext = df.iloc[0, 2]
         raw_label = df.iloc[0, 3]
 
         headline, h_mask, h_pool_mask, h_len, bodytext, b_mask, b_pool_mask, b_len, label = \
@@ -184,6 +222,63 @@ class IncongruityIterableDataset(IterableDataset):
         return headline, headline_mask, headline_pool_mask, headline_len, \
                bodytext, bodytext_mask, bodytext_pool_mask, bodytext_len, \
                label
+
+
+class RealworldDataset(IterableDataset):
+    'Characterizes an Iterabledataset for PyTorch'
+    def __init__(self, tokenizer, max_seq_len, data_dir, data_type):
+        'Initialization'
+        if data_type == DataType.Test_real_old:
+            path = os.path.join(data_dir, "real_world_old_no_EOS_EOP.tsv")
+        elif data_type == DataType.Test_real_new:
+            path = os.path.join(data_dir, "real_world_new_no_EOS_EOP.tsv")
+        elif data_type == DataType.Test_real_covid:
+            path = os.path.join(data_dir, "real_world_covid_no_EOS_EOP.tsv")
+        else:
+            raise TypeError("data_type should be one of the DataType classes for real world.")
+
+        self.path = path
+        self.tokenizer = tokenizer
+        self.max_seq_len = max_seq_len
+
+    def __iter__(self):
+
+        # Create an iterator
+        file_itr = open(self.path, encoding="utf-8")
+
+        # Map each element using the line_mapper
+        mapped_itr = map(self.line_mapper, file_itr)
+
+        return mapped_itr
+
+    def line_mapper(self, line):
+        # Splits the line into text and label and applies preprocessing to the text
+        try:
+            df = pd.read_csv(StringIO(line), sep="\t", header=None, quoting=csv.QUOTE_NONE)
+        except:
+            print(line)
+            sys.exit()
+
+        raw_headline = df.iloc[0, 1]
+        raw_bodytext = df.iloc[0, 2]
+
+        headline, h_mask, h_pool_mask, h_len, bodytext, b_mask, b_pool_mask, b_len = \
+            self.preprocess(raw_headline, raw_bodytext)
+
+        return headline, h_mask, h_pool_mask, h_len, bodytext, b_mask, b_pool_mask, b_len
+
+    def preprocess(self, headline, bodytext):
+        headline, headline_mask, headline_pool_mask, headline_len = pad_and_mask_for_bert_emb(headline,
+                                                                                              self.tokenizer,
+                                                                                              self.max_seq_len)
+
+        bodytext_parsed_str = " ".join(list(filter(lambda x: x not in ["<EOS>", "<EOP>"], bodytext.split())))
+        bodytext, bodytext_mask, bodytext_pool_mask, bodytext_len = pad_and_mask_for_bert_emb(bodytext_parsed_str,
+                                                                                              self.tokenizer,
+                                                                                              self.max_seq_len)
+
+        return headline, headline_mask, headline_pool_mask, headline_len, \
+               bodytext, bodytext_mask, bodytext_pool_mask, bodytext_len
 
 
 class ParagraphIncongruityIterableDataset(IterableDataset):

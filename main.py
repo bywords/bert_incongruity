@@ -5,13 +5,15 @@ import random
 import argparse
 import torch
 import logging
+import pandas as pd
 
 from torch import nn
 from torch.utils import data
 from sklearn.metrics import accuracy_score, roc_auc_score
 from transformers import BertTokenizer, AdamW, get_linear_schedule_with_warmup, BertModel
 
-from data_utils import IncongruityIterableDataset, DataType, tuplify_with_device, bert_dim, str2bool
+from data_utils import IncongruityIterableDataset, RealworldDataset, \
+    DataType, tuplify_with_device, bert_dim, str2bool
 from bert_pool import BertPoolForIncongruity
 
 
@@ -212,53 +214,85 @@ def main(args):
                                                   data_dir=args.data_dir, data_type=DataType.Test)
 
     elif args.mode == "real_old":
-        test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                              data_dir=args.data_dir, data_type=DataType.Test_real_old)
+        test_set = RealworldDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                    data_dir=args.data_dir, data_type=DataType.Test_real_old)
 
     elif args.mode == "real_new":
-        test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                              data_dir=args.data_dir, data_type=DataType.Test_real_new)
+        test_set = RealworldDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                    data_dir=args.data_dir, data_type=DataType.Test_real_new)
 
     elif args.mode == "real_covid":
-        test_set = IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                              data_dir=args.data_dir, data_type=DataType.Test_real_covid)
+        test_set = RealworldDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                    data_dir=args.data_dir, data_type=DataType.Test_real_covid)
 
-    test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
+    else:
+        raise TypeError("args.mode is wrong.")
 
+    test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size, shuffle=False)
 
+    if args.mode in ["train", "test"]:
+        model_output_path = os.path.join(exp_dir, "pred_test.tsv")
 
-    # Evaluate test data for one epoch
-    y_targets, y_preds = [], []
-    for batch in test_dataloader:
-        # Add batch to GPU
-        batch = tuplify_with_device(batch, device)
-        # Unpack the inputs from our dataloader
-        b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens, \
-        b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens, \
-        b_labels = batch
-        # Telling the model not to compute or store gradients, saving memory and speeding up validation
-        with torch.no_grad():
-            # Forward pass, calculate logit predictions
-            preds = torch.sigmoid(model(b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens,
-                                        b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens))
+        # Evaluate test data for one epoch
+        y_targets, y_preds = [], []
+        for batch in test_dataloader:
+            # Add batch to GPU
+            batch = tuplify_with_device(batch, device)
+            # Unpack the inputs from our dataloader
+            b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens, \
+            b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens, \
+            b_labels = batch
+            # Telling the model not to compute or store gradients, saving memory and speeding up validation
+            with torch.no_grad():
+                # Forward pass, calculate logit predictions
+                preds = torch.sigmoid(model(b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens,
+                                            b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens))
 
-        # Move logits and labels to CPU
-        preds = preds.detach().cpu().numpy()
-        label_ids = b_labels.to('cpu').numpy()
+            # Move logits and labels to CPU
+            preds = preds.detach().cpu().numpy()
+            label_ids = b_labels.to('cpu').numpy()
 
-        y_preds.append(preds)
-        y_targets.append(label_ids)
+            y_preds.append(preds)
+            y_targets.append(label_ids)
 
-    y_preds = np.concatenate(y_preds).reshape((-1, ))
-    y_targets = np.concatenate(y_targets).reshape((-1, )).astype(int)
+        y_preds = np.concatenate(y_preds).reshape((-1, ))
+        y_targets = np.concatenate(y_targets).reshape((-1, )).astype(int)
 
-    temp_index = np.isnan(y_preds)
-    y_preds = y_preds[~temp_index]
-    y_targets = y_targets[~temp_index]
+        temp_index = np.isnan(y_preds)
+        y_preds = y_preds[~temp_index]
+        y_targets = y_targets[~temp_index]
 
-    acc = accuracy_score(y_targets, y_preds.round())
-    auroc = roc_auc_score(y_targets, y_preds)
-    logger.info("Test Accuracy: {:.4f}, AUROC: {:.4f}".format(acc, auroc))
+        acc = accuracy_score(y_targets, y_preds.round())
+        auroc = roc_auc_score(y_targets, y_preds)
+        logger.info("Test Accuracy: {:.4f}, AUROC: {:.4f}".format(acc, auroc))
+
+        y_preds = pd.DataFrame({"pred": y_preds, "target": y_targets})
+        y_preds.to_csv(model_output_path, index=False, header=True, sep="\t")
+
+    else:   # real world articles
+        model_output_path = os.path.join(exp_dir, "pred_{}.txt".format(args.mode))
+
+        # Evaluate test data for one epoch
+        y_targets, y_preds = [], []
+        for batch in test_dataloader:
+            # Add batch to GPU
+            batch = tuplify_with_device(batch, device)
+            # Unpack the inputs from our dataloader
+            b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens, \
+            b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens = batch
+            # Telling the model not to compute or store gradients, saving memory and speeding up validation
+            with torch.no_grad():
+                # Forward pass, calculate logit predictions
+                preds = torch.sigmoid(model(b_head_input_ids, b_head_token_type_ids, b_head_pool_masks, b_head_lens,
+                                            b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens))
+
+            # Move logits and labels to CPU
+            preds = preds.detach().cpu().numpy()
+            y_preds.append(preds)
+
+        y_preds = pd.Series(np.concatenate(y_preds).reshape((-1,)).to_list())
+        y_preds.to_csv(model_output_path, index=False, header=False)
+
 
 
 if __name__ == "__main__":
