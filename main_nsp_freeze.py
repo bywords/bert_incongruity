@@ -137,7 +137,7 @@ def main(args):
                 softmax = torch.nn.Softmax(dim=1)
                 prediction_sm = softmax(prediction)
 
-            y_preds += prediction_sm.detach().cpu().numpy()[:, 1].tolist()
+            y_preds.append(prediction_sm.detach().cpu().numpy()[:, 1])
             break
 
         y_preds = np.concatenate(y_preds).reshape((-1,))
