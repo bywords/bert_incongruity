@@ -139,7 +139,7 @@ def main(args):
 
             preds = prediction_sm.detach().cpu().numpy()[:, 1].tolist()
 
-            print(preds.shape)
+            # print(preds.shape)
             y_preds.append(preds)
             print(y_preds)
             break
