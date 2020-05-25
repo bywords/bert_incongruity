@@ -26,7 +26,7 @@ scp -P 9922 kaist@kdialogue.snu.ac.kr:~/incon_dataset/headline_swap_news/train/*
 ```
 
 - Be cautious that the dataset size is huge.
-- The names of datasets should be train/val/test.tsv
+- The names of datasets should be train/dev/test.tsv
 
 ### Create sample dataset for test purposes
 
@@ -35,11 +35,40 @@ shuf -n 1000 train.tsv > train_sample.tsv
 ```
 
 
-## Train
+## Commands for Run
+
+### Train (BDE)
 
 ```bash
-python main.py --mode train --data_dir [DATA_DIR] --model pool --model_file model.pt --freeze True
+python main_bde.py --mode train --data_dir [DATA_DIR]
 ```
 
 
+### Test (BDE)
 
+```bash
+python main_bde.py --mode test --data_dir [DATA_DIR]
+```
+
+### Inference on real-world articles (BDE)
+
+```bash
+python main_bde.py --mode [MODE] --data_dir [DATA_DIR]
+```
+
+- MODE: real_old, real_new, real_covid
+
+### Test (Bert-NSP)
+
+```bash
+python main_nsp_freeze.py --mode test --data_dir [DATA_DIR]
+```
+
+
+### Inference on real-world articles (Bert-NSP)
+
+```bash
+python main_nsp_freeze.py --mode [MODE] --data_dir [DATA_DIR]
+```
+
+- MODE: real_old, real_new, real_covid
