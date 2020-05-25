@@ -138,11 +138,7 @@ def main(args):
                 prediction_sm = softmax(prediction)
 
             y_preds += prediction_sm.detach().cpu().numpy()[:, 1].tolist()
-
-            # # print(preds.shape)
-            # y_preds.append(preds)
-            # print(y_preds)
-            # break
+            break
 
         y_preds = np.concatenate(y_preds).reshape((-1,))
         y_preds = pd.Series(np.concatenate(y_preds).reshape((-1,)).to_list())

@@ -287,12 +287,7 @@ def main(args):
                                             b_body_input_ids, b_body_token_type_ids, b_body_pool_masks, b_body_lens))
 
             # Move logits and labels to CPU
-            preds = preds.detach().cpu().numpy()
-
-            print(preds.shape)
-            y_preds.append(preds)
-            print(y_preds)
-            break
+            y_preds += preds.detach().cpu().numpy().reshape((-1,)).tolist()
 
 
         y_preds = pd.Series(np.concatenate(y_preds).reshape((-1,)).to_list())
