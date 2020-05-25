@@ -140,7 +140,6 @@ def main(args):
             y_preds.append(prediction_sm.detach().cpu().numpy()[:, 1])
             break
 
-        y_preds = np.concatenate(y_preds).reshape((-1,))
         y_preds = pd.Series(np.concatenate(y_preds).reshape((-1,)).to_list())
         y_preds.to_csv(pred_output_path, index=False, header=False)
 
