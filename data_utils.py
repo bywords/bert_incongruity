@@ -385,6 +385,12 @@ def tuplify_with_device_for_nsp(batch, device):
                   batch[3].to(device, dtype=torch.float)])
 
 
+def tuplify_with_device_for_nsp_inference(batch, device):
+    return tuple([batch[0].to(device, dtype=torch.long),
+                  batch[1].to(device, dtype=torch.long),
+                  batch[2].to(device, dtype=torch.long)])
+
+
 def bert_dim(bert_model):
     if bert_model == "bert-base-uncased":
         dim = 768

@@ -11,7 +11,8 @@ from torch.utils import data
 from sklearn.metrics import accuracy_score, roc_auc_score
 from transformers import BertTokenizer, BertForNextSentencePrediction
 
-from data_utils import NSP_RealworldDataset, NSP_IncongruityIterableDataset, DataType, tuplify_with_device_for_nsp, str2bool
+from data_utils import NSP_RealworldDataset, NSP_IncongruityIterableDataset, DataType, \
+    tuplify_with_device_for_nsp, tuplify_with_device_for_nsp_inference, str2bool
 
 
 # To disable kears warnings
@@ -126,7 +127,7 @@ def main(args):
         y_targets, y_preds = [], []
         for batch in test_dataloader:
             # Add batch to GPU
-            batch = tuplify_with_device_for_nsp(batch, device)
+            batch = tuplify_with_device_for_nsp_inference(batch, device)
             # Unpack the inputs from our dataloader
             b_tokens, b_attention_masks, b_segments_ids = batch
 
