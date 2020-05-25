@@ -104,13 +104,10 @@ class NSP_RealworldDataset(Dataset):
     def __init__(self, tokenizer, max_seq_len, data_dir, data_type):
         'Initialization'
         if data_type == DataType.Test_real_old:
-            sep = ","
             path = os.path.join(data_dir, "real_world_old_no_EOS_EOP.tsv")
         elif data_type == DataType.Test_real_new:
-            sep = "\t"
             path = os.path.join(data_dir, "real_world_new_no_EOS_EOP.tsv")
         elif data_type == DataType.Test_real_covid:
-            sep = "\t"
             path = os.path.join(data_dir, "real_world_covid_no_EOS_EOP.tsv")
         else:
             raise TypeError("data_type should be one of the DataType classes for real world.")
@@ -118,7 +115,12 @@ class NSP_RealworldDataset(Dataset):
         self.path = path
         self.tokenizer = tokenizer
         self.max_seq_len = max_seq_len
-        self.df = pd.read_csv(path, sep=sep, header=None, encoding="utf-8", quoting=csv.QUOTE_NONE)
+
+        if data_type == DataType.Test_real_old:
+            self.df = pd.read_csv(path, sep=",", header=None, encoding="utf-8")
+        else:
+            self.df = pd.read_csv(path, sep="\t", header=None, encoding="utf-8", quoting=csv.QUOTE_NONE)
+
         self.headline = self.df.iloc[:, 1]
         self.bodytext = self.df.iloc[:, 2]
 
@@ -222,13 +224,10 @@ class RealworldDataset(Dataset):
     def __init__(self, tokenizer, max_seq_len, data_dir, data_type):
         'Initialization'
         if data_type == DataType.Test_real_old:
-            sep = ","
             path = os.path.join(data_dir, "real_world_old_no_EOS_EOP.tsv")
         elif data_type == DataType.Test_real_new:
-            sep = "\t"
             path = os.path.join(data_dir, "real_world_new_no_EOS_EOP.tsv")
         elif data_type == DataType.Test_real_covid:
-            sep = "\t"
             path = os.path.join(data_dir, "real_world_covid_no_EOS_EOP.tsv")
         else:
             raise TypeError("data_type should be one of the DataType classes for real world.")
@@ -237,7 +236,11 @@ class RealworldDataset(Dataset):
         self.tokenizer = tokenizer
         self.max_seq_len = max_seq_len
 
-        self.df = pd.read_csv(path, sep=sep, header=None, encoding="utf-8", quoting=csv.QUOTE_NONE)
+        if data_type == DataType.Test_real_old:
+            self.df = pd.read_csv(path, sep=",", header=None, encoding="utf-8")
+        else:
+            self.df = pd.read_csv(path, sep="\t", header=None, encoding="utf-8", quoting=csv.QUOTE_NONE)
+
         self.headline = self.df.iloc[:, 1]
         self.bodytext = self.df.iloc[:, 2]
 
