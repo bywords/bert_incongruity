@@ -231,7 +231,7 @@ def main(args):
     test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size, shuffle=False)
 
     if args.mode in ["train", "test"]:
-        model_output_path = os.path.join(exp_dir, "pred_test.tsv")
+        pred_output_path = os.path.join(exp_dir, "pred_test.tsv")
 
         # Evaluate test data for one epoch
         y_targets, y_preds = [], []
@@ -267,10 +267,10 @@ def main(args):
         logger.info("Test Accuracy: {:.4f}, AUROC: {:.4f}".format(acc, auroc))
 
         y_preds = pd.DataFrame({"pred": y_preds, "target": y_targets})
-        y_preds.to_csv(model_output_path, index=False, header=True, sep="\t")
+        y_preds.to_csv(pred_output_path, index=False, header=True, sep="\t")
 
     else:   # real world articles
-        model_output_path = os.path.join(exp_dir, "pred_{}.txt".format(args.mode))
+        pred_output_path = os.path.join(exp_dir, "pred_{}.txt".format(args.mode))
 
         # Evaluate test data for one epoch
         y_targets, y_preds = [], []
@@ -291,7 +291,7 @@ def main(args):
             y_preds.append(preds)
 
         y_preds = pd.Series(np.concatenate(y_preds).reshape((-1,)).to_list())
-        y_preds.to_csv(model_output_path, index=False, header=False)
+        y_preds.to_csv(pred_output_path, index=False, header=False)
 
 
 

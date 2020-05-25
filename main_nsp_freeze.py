@@ -5,12 +5,13 @@ import random
 import argparse
 import torch
 import logging
+import pandas as pd
 
 from torch.utils import data
 from sklearn.metrics import accuracy_score, roc_auc_score
 from transformers import BertTokenizer, BertForNextSentencePrediction
 
-from data_utils import NSP_IncongruityIterableDataset, DataType, tuplify_with_device_for_nsp, str2bool
+from data_utils import NSP_RealworldDataset, NSP_IncongruityIterableDataset, DataType, tuplify_with_device_for_nsp, str2bool
 
 
 # To disable kears warnings
@@ -64,16 +65,16 @@ def main(args):
                                                   data_dir=args.data_dir, data_type=DataType.Test)
 
     elif args.mode == "real_old":
-        test_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                              data_dir=args.data_dir, data_type=DataType.Test_real_old)
+        test_set = NSP_RealworldDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                        data_dir=args.data_dir, data_type=DataType.Test_real_old)
 
     elif args.mode == "real_new":
-        test_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                              data_dir=args.data_dir, data_type=DataType.Test_real_new)
+        test_set = NSP_RealworldDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                        data_dir=args.data_dir, data_type=DataType.Test_real_new)
 
     elif args.mode == "real_covid":
-        test_set = NSP_IncongruityIterableDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
-                                              data_dir=args.data_dir, data_type=DataType.Test_real_covid)
+        test_set = NSP_RealworldDataset(tokenizer=tokenizer, max_seq_len=args.max_seq_len,
+                                        data_dir=args.data_dir, data_type=DataType.Test_real_covid)
 
     else:
         raise TypeError("args.mode is wrong.")
@@ -81,36 +82,68 @@ def main(args):
     test_dataloader = data.DataLoader(test_set, batch_size=args.batch_size)
     nsp_model.eval()
 
-    # Evaluate test data for one epoch
-    y_targets, y_preds = [], []
-    for batch in test_dataloader:
-        # Add batch to GPU
-        batch = tuplify_with_device_for_nsp(batch, device)
-        # Unpack the inputs from our dataloader
-        b_tokens, b_attention_masks, b_segments_ids, b_labels = batch
+    if args.mode == "test":
+        pred_output_path = os.path.join(exp_dir, "pred_test.tsv")
 
-        with torch.no_grad():
-            prediction = nsp_model(b_tokens, attention_mask=b_attention_masks, token_type_ids=b_segments_ids)
-            prediction = prediction[0]
-            softmax = torch.nn.Softmax(dim=1)
-            prediction_sm = softmax(prediction)
+        # Evaluate test data for one epoch
+        y_targets, y_preds = [], []
+        for batch in test_dataloader:
+            # Add batch to GPU
+            batch = tuplify_with_device_for_nsp(batch, device)
+            # Unpack the inputs from our dataloader
+            b_tokens, b_attention_masks, b_segments_ids, b_labels = batch
 
-        preds = prediction_sm.detach().cpu().numpy()[:, 1]
-        label_ids = b_labels.to('cpu').numpy().flatten()
+            with torch.no_grad():
+                prediction = nsp_model(b_tokens, attention_mask=b_attention_masks, token_type_ids=b_segments_ids)
+                prediction = prediction[0]
+                softmax = torch.nn.Softmax(dim=1)
+                prediction_sm = softmax(prediction)
 
-        y_preds.append(preds)
-        y_targets.append(label_ids)
+            preds = prediction_sm.detach().cpu().numpy()[:, 1]
+            label_ids = b_labels.to('cpu').numpy().flatten()
 
-    y_preds = np.concatenate(y_preds).reshape((-1, ))
-    y_targets = np.concatenate(y_targets).reshape((-1, )).astype(int)
+            y_preds.append(preds)
+            y_targets.append(label_ids)
 
-    temp_index = np.isnan(y_preds)
-    y_preds = y_preds[~temp_index]
-    y_targets = y_targets[~temp_index]
+        y_preds = np.concatenate(y_preds).reshape((-1, ))
+        y_targets = np.concatenate(y_targets).reshape((-1, )).astype(int)
 
-    acc = accuracy_score(y_targets, y_preds.round())
-    auroc = roc_auc_score(y_targets, y_preds)
-    logger.info("Test Accuracy: {:.4f}, AUROC: {:.4f}".format(acc, auroc))
+        temp_index = np.isnan(y_preds)
+        y_preds = y_preds[~temp_index]
+        y_targets = y_targets[~temp_index]
+
+        acc = accuracy_score(y_targets, y_preds.round())
+        auroc = roc_auc_score(y_targets, y_preds)
+        logger.info("Test Accuracy: {:.4f}, AUROC: {:.4f}".format(acc, auroc))
+
+        y_preds = pd.DataFrame({"pred": y_preds, "target": y_targets})
+        y_preds.to_csv(pred_output_path, index=False, header=True, sep="\t")
+
+    else: # for real world articles
+        pred_output_path = os.path.join(exp_dir, "pred_{}.txt".format(args.mode))
+
+        # Evaluate test data for one epoch
+        y_targets, y_preds = [], []
+        for batch in test_dataloader:
+            # Add batch to GPU
+            batch = tuplify_with_device_for_nsp(batch, device)
+            # Unpack the inputs from our dataloader
+            b_tokens, b_attention_masks, b_segments_ids = batch
+
+            with torch.no_grad():
+                prediction = nsp_model(b_tokens, attention_mask=b_attention_masks, token_type_ids=b_segments_ids)
+                prediction = prediction[0]
+                softmax = torch.nn.Softmax(dim=1)
+                prediction_sm = softmax(prediction)
+
+            preds = prediction_sm.detach().cpu().numpy()[:, 1]
+
+            y_preds.append(preds)
+
+        y_preds = np.concatenate(y_preds).reshape((-1,))
+        y_preds = pd.Series(np.concatenate(y_preds).reshape((-1,)).to_list())
+        y_preds.to_csv(pred_output_path, index=False, header=False)
+
 
 
 if __name__ == "__main__":
