@@ -203,6 +203,11 @@ def main(args):
         bert_model = BertModel.from_pretrained(args.bert_type)
         model = BertPoolForIncongruity(bert_model, hidden_size=bert_dim(args.bert_type))
 
+        t = torch.load(model_path)
+        print(t.keys())
+        import sys
+        sys.exit()
+
         model.load_state_dict(torch.load(model_path), strict=False)
         model.eval()
 
