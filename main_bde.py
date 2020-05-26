@@ -202,8 +202,10 @@ def main(args):
     else:
         bert_model = BertModel.from_pretrained(args.bert_type)
         model = BertPoolForIncongruity(bert_model, hidden_size=bert_dim(args.bert_type))
-        model = model.load_state_dict(torch.load(model_path))
         model.cuda()
+
+        model = model.load_state_dict(torch.load(model_path))
+        model.eval()
 
     if args.mode in ["train", "test"]:
         if args.sample_train:
